@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" href="/css/login_style.css">
+</head>
+<body>
+<h1></h1>
+<form action="/login" method="post">
+    <input type="text" name="username" placeholder="Enter nickname..."/><br/>
+    <input type="password" name="password" placeholder="Enter the password..."/><br/>
+    <button type="submit">Log in</button>
+</form>
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('error')){
+        alert("Username is not existing!")
+    }
+</script>
+</body>
+</html>

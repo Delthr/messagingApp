@@ -1,0 +1,12 @@
+# Java / Spring / Maven / Gradle
+**/target/
+**/.idea/
+**/.mvn/
+*.class
+
+# Node / React Native / Expo
+**/node_modules/
+**/.expo/
+**/.claude/
+npm-debug.log*
+yarn-debug.log*
