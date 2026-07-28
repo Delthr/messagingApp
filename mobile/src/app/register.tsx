@@ -56,7 +56,7 @@ export default function Index() {
 
   return (
     <LinearGradient style={stylesBackground.gradientBackground} colors={gradientK} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }}>
-      <SafeAreaView style={[stylesBackground.container]}>
+      <SafeAreaView style={stylesBackground.container}>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={[styles.formBox, formBoxTheme]}>
 

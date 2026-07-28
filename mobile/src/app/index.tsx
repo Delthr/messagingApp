@@ -2,6 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from "react";
 import { SafeAreaView, Text, TextInput, TouchableOpacity, useColorScheme, View } from "react-native";
+import { saveToken } from '../utils/storage';
 import api from './axioss';
 import stylesBackground from './baseStyle';
 import styles from './formStyle';
@@ -36,12 +37,18 @@ export default function LoginScreen() {
         password: password,
       });
       console.log("Server response: ", response.data);
-      alert("You have been loged in <3");
+      const token = response.data.token;
+      if (token) {
+        await saveToken(token);
+        router.replace('/contacts');
+      } else {
+        console.log('No token in response!');
+      }
     } catch (error: any) {
       if (error.response) {
         console.log(error.response.status);
         console.log(error.response.data);
-        alert("to trzeba zaimplementowac");
+        alert("To be implemented!");
       } else if (error.request) {
         alert("Cannot connect with server.");
       } else {
