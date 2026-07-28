@@ -1,8 +1,8 @@
-import api from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from "react";
 import { SafeAreaView, Text, TextInput, TouchableOpacity, useColorScheme, View } from "react-native";
+import api from './axioss';
 import stylesBackground from './baseStyle';
 import styles from './formStyle';
 
@@ -13,7 +13,7 @@ export default function LoginScreen() {
 
   const [isDarkMode, setIsDarkMode] = useState(colorScheme === 'dark');
 
-  const lightGradient = ['rgb(180, 234, 251)', 'rgb(248, 208, 190)'] as const;
+  const lightGradient = ['#2ba4f5', '#9eeff5'] as const;
   const darkGradient = ['rgb(12, 2, 55)', 'rgb(54, 17, 43)'] as const;
   const gradientK = isDarkMode ? darkGradient : lightGradient;
 
@@ -28,7 +28,7 @@ export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = async () => {
+  async function handleLogin() {
     try {
       console.log("Sending logging form...");
       const response = await api.post('/login', {
@@ -36,6 +36,7 @@ export default function LoginScreen() {
         password: password,
       });
       console.log("Server response: ", response.data);
+      alert("You have been loged in <3");
     } catch (error: any) {
       if (error.response) {
         console.log(error.response.status);
@@ -54,7 +55,7 @@ export default function LoginScreen() {
         <Stack.Screen options={{ headerShown: false }} />
         <View style={[styles.formBox, formBoxTheme]}>
 
-          <Text style={[styles.loginText, loginTextTheme]}>Log in</Text>
+          <Text style={[styles.loginText, loginTextTheme]}>Login</Text>
 
           <TextInput style={[styles.loginInput, loginInputTheme]}
             placeholder='Enter your username...'

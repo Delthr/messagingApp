@@ -1,8 +1,8 @@
-import api from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from "react";
 import { SafeAreaView, Text, TextInput, TouchableOpacity, useColorScheme, View } from "react-native";
+import api from "./axioss";
 import stylesBackground from './baseStyle';
 import styles from './formStyle';
 
@@ -29,7 +29,10 @@ export default function Index() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleRegister = async () => {
+
+
+
+  const handleRegistration = async () => {
     try {
       console.log("Sending register form...");
       const response = await api.post('/register', {
@@ -38,6 +41,7 @@ export default function Index() {
         password: password
       });
       console.log("Server response: ", response.data);
+      alert("Account has been created!");
     } catch (error: any) {
       if (error.response) {
         console.log(error.response.status);
@@ -57,7 +61,7 @@ export default function Index() {
         <View style={[styles.formBox, formBoxTheme]}>
 
 
-          <Text style={[styles.loginText, loginTextTheme]}>Register</Text>
+          <Text style={[styles.loginText, loginTextTheme]}>Signup</Text>
 
 
           <TextInput style={[styles.loginInput, loginInputTheme]}
@@ -81,13 +85,8 @@ export default function Index() {
 
           <Text style={[styles.registerText, registerTextTheme]}>You have an account? Log in <Text style={[styles.registerText, registerTextTheme]} onPress={() => router.push('/')}>here.</Text></Text>
 
-          <TouchableOpacity style={[styles.loginButton, loginButtonTheme]} onPress={() => {
-            console.log("Registering user...");
-            console.log("Username: ", username);
-            console.log("Email: ", email);
-            console.log("Password: ", password);
-          }}>
-            <Text style={[styles.loginButtonText, loginButtonTheme]}>Register</Text>
+          <TouchableOpacity style={[styles.loginButton, loginButtonTheme]} onPress={() => { handleRegistration() }}>
+            <Text style={[styles.loginButtonText, loginButtonTheme]}>Sign up</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

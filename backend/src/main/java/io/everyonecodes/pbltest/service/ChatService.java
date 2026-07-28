@@ -2,11 +2,9 @@ package io.everyonecodes.pbltest.service;
 
 import io.everyonecodes.pbltest.controller.ChatDto;
 import io.everyonecodes.pbltest.controller.UserDto;
-import io.everyonecodes.pbltest.model.Chat;
-import io.everyonecodes.pbltest.model.ChatParticipant;
-import io.everyonecodes.pbltest.model.ChatParticipantId;
-import io.everyonecodes.pbltest.model.User;
+import io.everyonecodes.pbltest.model.*;
 import io.everyonecodes.pbltest.repository.ChatRepository;
+import io.everyonecodes.pbltest.repository.MessageRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -24,12 +22,14 @@ public class ChatService {
     private final UserService userService;
     private final ChatParticipantService chatParticipantService;
     private final FriendshipService friendshipService;
+    private final MessageRepository messageRepository;
 
-    public ChatService(ChatRepository chatRepository, UserService userService, ChatParticipantService chatParticipantService, FriendshipService friendshipService) {
+    public ChatService(ChatRepository chatRepository, UserService userService, ChatParticipantService chatParticipantService, FriendshipService friendshipService, MessageRepository messageRepository) {
         this.chatRepository = chatRepository;
         this.userService = userService;
         this.chatParticipantService = chatParticipantService;
         this.friendshipService = friendshipService;
+        this.messageRepository = messageRepository;
     }
 
     public Optional<Chat> findChatById(UUID chatId) {
@@ -125,7 +125,6 @@ public class ChatService {
         var user = userService.findUserByUsername(username).orElseThrow(
                 () -> new jakarta.persistence.EntityNotFoundException("User " + username + " has not been found!")
         );
-       var allChats = chatRepository.findAllChatsByUserId(user.getId());
-       return allChats.stream().map(chat -> new ChatDto(chat.getId().toString(), chat.getName())).toList();
+        return chatRepository.findAllUserChatsWithLastMessage(user.getId());
     }
 }

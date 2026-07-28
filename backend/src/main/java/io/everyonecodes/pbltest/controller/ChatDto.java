@@ -1,4 +1,6 @@
 package io.everyonecodes.pbltest.controller;
 
-public record ChatDto(String chatId, String chatName) {
+import java.util.UUID;
+
+public record ChatDto(UUID chatId, String chatName, String lastMessage, String status) {
 }

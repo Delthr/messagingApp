@@ -31,6 +31,9 @@ export const styles = StyleSheet.create({
 
 
   loginInput: {
+    textShadowColor: '#000875',
+    textShadowRadius: 10,
+    elevation: 0.1,
     textAlign: 'center',
     fontSize: 17,
     width: '70%',
