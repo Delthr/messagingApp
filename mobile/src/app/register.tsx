@@ -2,9 +2,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from "react";
 import { SafeAreaView, Text, TextInput, TouchableOpacity, useColorScheme, View } from "react-native";
-import api from "./axioss";
-import stylesBackground from './baseStyle';
-import styles from './formStyle';
+import api from "../utils/axioss";
+import stylesBackground from './styles/baseStyle';
+import styles from './styles/formStyle';
 
 export default function Index() {
   const router = useRouter();

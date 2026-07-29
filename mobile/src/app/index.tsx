@@ -2,10 +2,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from "react";
 import { SafeAreaView, Text, TextInput, TouchableOpacity, useColorScheme, View } from "react-native";
+import api from '../utils/axioss';
 import { saveToken } from '../utils/storage';
-import api from './axioss';
-import stylesBackground from './baseStyle';
-import styles from './formStyle';
+import stylesBackground from './styles/baseStyle';
+import styles from './styles/formStyle';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -40,7 +40,7 @@ export default function LoginScreen() {
       const token = response.data.token;
       if (token) {
         await saveToken(token);
-        router.replace('/contacts');
+        router.replace('/mainPanel');
       } else {
         console.log('No token in response!');
       }
