@@ -29,7 +29,8 @@ public class User {
         this.username = username;
     }
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, orphanRemoval = false)
+    @ToString.Exclude
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
     private List<Authority> authorities;
 
 }

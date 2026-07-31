@@ -1,6 +1,7 @@
+import { getToken } from '@/utils/storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FlatList, Image, Platform, SafeAreaView, Text, TextInput, TouchableOpacity, useColorScheme, View } from "react-native";
 import api from '../utils/axioss';
 import stylesBackground from './styles/baseStyle';
@@ -24,14 +25,13 @@ export default function Index() {
     const friendsButtonTheme = isDarkMode ? styles.darkFriendsButton : styles.lightFriendsButton;
 
 
-    async function moveToContactPage(id: string, username: string, email: string, status: string) {
+    async function moveToContactPage(id: string, username: string, email: string) {
         router.push({
             pathname: '/contact',
             params: {
                 id: id,
                 username: username,
                 email: email,
-                status: status,
             },
         });
     }
@@ -63,44 +63,21 @@ export default function Index() {
         }
     }
 
-    const Friends = [
-        {
-            id: '1',
-            friendsUsername: 'MJ',
-            friendsEmail: 'mj@gmail.com',
-            friendsStatus: 'ACCEPTED',
-        },
-        {
-            id: '2',
-            friendsUsername: 'Nidal',
-            friendsEmail: 'cheescake@gmail.com',
-            friendsStatus: 'ACCEPTED',
-        },
-        {
-            id: '3',
-            friendsUsername: 'Bernard',
-            friendsEmail: 'bernard@gmail.com',
-            friendsStatus: 'ACCEPTED',
-        }
-    ]
-
-
     type Friend = {
+        email: string,
         id: string,
-        friendsUsername: string,
-        friendsEmail: string,
-        friendsStatus: string,
+        username: string,
     }
-    type RecordPropsFriends = { id: string, friendsUsername: string, friendsEmail: string, friendsStatus: string };
-    const RecordFriends = ({ id, friendsUsername, friendsEmail, friendsStatus }: RecordPropsFriends) => (
-        <TouchableOpacity style={styles.goToContactButton} onPress={() => moveToContactPage(id, friendsUsername, friendsEmail, friendsStatus)}>
+    type RecordPropsFriends = { email: string, id: string, username: string };
+    const RecordFriends = ({ email, id, username }: RecordPropsFriends) => (
+        <TouchableOpacity style={styles.goToContactButton} onPress={() => moveToContactPage(id, username, email)}>
             <View style={styles.friendBox}>
                 <Image source={require('../../assets/images/avatar.png')} style={styles.avatar} />
                 <View style={styles.friendData}>
                     <Text style={styles.friendDataText}
                         numberOfLines={1}
                         ellipsizeMode='tail'
-                    >{friendsUsername}</Text>
+                    >{username}</Text>
                 </View>
             </View>
         </TouchableOpacity>
@@ -128,7 +105,11 @@ export default function Index() {
         }
     ];
 
-    type RecordProps = { id: string, name: string; lastMessage: string };
+    type RecordProps = {
+        id: string,
+        name: string,
+        lastMessage: string
+    };
     const Record = ({ id, name, lastMessage }: RecordProps) => (
         <TouchableOpacity style={styles.goToChatButton} onPress={() => goToChat(id)}>
             <View style={[styles.contactBox, contactTheme]}>
@@ -193,6 +174,44 @@ export default function Index() {
         console.log("Added friend: ", username)
     }
 
+
+
+
+    async function getFriends(): Promise<Friend[] | null> {
+        try {
+            const token = await getToken();
+            console.log("Getting Friends list");
+            const response = await api.get('/friends/friendsList');
+            console.log("friends loaded!")
+            return response.data;
+        } catch (error: any) {
+            if (error.response) {
+                console.log(error.response.status);
+                console.log(error.response.data);
+                alert("To be implemented!");
+                return null;
+            } else if (error.request) {
+                alert("Cannot connect with server.");
+                return null;
+            } else {
+                console.log("Ups... Something went wrong! ", error.message);
+                return null;
+            }
+        }
+    }
+
+    const [friends, setFriends] = useState<Friend[]>([]);
+
+    useEffect(() => {
+        async function fetchFriends() {
+            const data = await getFriends();
+            if (data) {
+                setFriends(data);
+            }
+        };
+        fetchFriends();
+    }, []);
+
     return (
         <LinearGradient style={stylesBackground.gradientBackground} colors={gradientK} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }}>
             <SafeAreaView style={stylesBackground.container}>
@@ -232,8 +251,8 @@ export default function Index() {
                                 </View>
                             )}
                         </View>
-                        <FlatList data={Friends}
-                            renderItem={({ item }) => <RecordFriends id={item.id} friendsUsername={item.friendsUsername} friendsEmail={item.friendsEmail} friendsStatus={item.friendsStatus} />}
+                        <FlatList data={friends}
+                            renderItem={({ item }) => <RecordFriends email={item.email} id={item.id} username={item.username} />}
                             keyExtractor={item => item.id.toString()}
                             numColumns={1} />
                         <TouchableOpacity onPress={() => moveToRequests()}>

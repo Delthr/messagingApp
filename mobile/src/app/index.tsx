@@ -3,7 +3,7 @@ import { Stack, useRouter } from 'expo-router';
 import { useState } from "react";
 import { SafeAreaView, Text, TextInput, TouchableOpacity, useColorScheme, View } from "react-native";
 import api from '../utils/axioss';
-import { saveToken } from '../utils/storage';
+import { saveToken, saveUserId } from '../utils/storage';
 import stylesBackground from './styles/baseStyle';
 import styles from './styles/formStyle';
 
@@ -36,6 +36,8 @@ export default function LoginScreen() {
         username: username,
         password: password,
       });
+      const authResponseDto = response.data;
+      await saveUserId(authResponseDto.id.toString());
       console.log("Server response: ", response.data);
       const token = response.data.token;
       if (token) {

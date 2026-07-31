@@ -18,7 +18,8 @@ function getBaseURL() {
     if (Platform.OS === 'web') {
         return 'http://localhost:9999/api';
     } else {
-        return 'http://192.168.0.108:9999/api'
+        // return 'http://192.168.0.108:9999/api'
+        return 'http://192.168.1.135:9999/api'
     }
 
 }

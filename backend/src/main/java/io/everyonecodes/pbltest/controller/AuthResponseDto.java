@@ -1,4 +1,6 @@
 package io.everyonecodes.pbltest.controller;
 
-public record AuthResponseDto(String token) {
+import java.util.UUID;
+
+public record AuthResponseDto(String token, UUID id) {
 }

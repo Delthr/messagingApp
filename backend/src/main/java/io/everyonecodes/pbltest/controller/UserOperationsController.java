@@ -1,5 +1,6 @@
 package io.everyonecodes.pbltest.controller;
 
+import io.everyonecodes.pbltest.model.CustomUserDetails;
 import io.everyonecodes.pbltest.model.User;
 import io.everyonecodes.pbltest.service.JwtService;
 import io.everyonecodes.pbltest.service.UserService;
@@ -34,15 +35,14 @@ public class UserOperationsController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login (@RequestBody LoginDto loginDto){
-        System.out.println(loginDto);
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginDto.username(), loginDto.password())
             );
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             String token = jwtService.generateToken(userDetails);
-            return ResponseEntity.ok(new AuthResponseDto(token));
+            return ResponseEntity.ok(new AuthResponseDto(token, userDetails.getUser().getId()));
         } catch (BadCredentialsException e){
             return ResponseEntity.status(401).body("Wrong login or password!");
         }

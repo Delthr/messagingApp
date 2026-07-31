@@ -21,7 +21,7 @@ export default function Index() {
     const gradientK = isDarkMode ? darkGradient : lightGradient;
 
 
-    const { id, username, email, status } = useLocalSearchParams<{ id: string; username: string; email: string; status: string }>();
+    const { id, username, email } = useLocalSearchParams<{ id: string; username: string; email: string }>();
 
     async function getBack() {
         router.push('/mainPanel');
@@ -40,8 +40,7 @@ export default function Index() {
                     <Image source={require('../../assets/images/avatar.png')} style={styles.avatar} />
                     <Text style={styles.text}>
                         {username}{"\n"}
-                        {email}{"\n"}
-                        {status}
+                        {email}
                     </Text>
                 </View>
             </SafeAreaView>

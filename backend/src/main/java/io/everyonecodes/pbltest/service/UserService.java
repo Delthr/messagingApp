@@ -13,7 +13,7 @@ import java.util.UUID;
 
 @Service
 @AllArgsConstructor
-public class UserService implements UserDetailsService {
+public class UserService  {
 
     private final UserRepository userRepository;
 
@@ -32,19 +32,5 @@ public class UserService implements UserDetailsService {
 
     public void saveUser(User user){
         userRepository.save(user);
-    }
-
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Optional<User> user = userRepository.findUserByUsername(username);
-        if (user.isPresent()){
-            var userObj = user.get();
-            return org.springframework.security.core.userdetails.User.builder()
-                    .username(userObj.getUsername())
-                    .password(userObj.getPassword())
-                    .build();
-        } else {
-            throw new UsernameNotFoundException(username);
-        }
     }
 }

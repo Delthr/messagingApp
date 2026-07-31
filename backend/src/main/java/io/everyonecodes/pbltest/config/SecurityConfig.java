@@ -1,8 +1,8 @@
 package io.everyonecodes.pbltest.config;
 
 import io.everyonecodes.pbltest.model.JwtAuthenticationFilter;
+import io.everyonecodes.pbltest.service.CustomUserDetailsService;
 import io.everyonecodes.pbltest.service.JwtService;
-import io.everyonecodes.pbltest.service.MyUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -27,17 +27,12 @@ import java.util.List;
 public class SecurityConfig {
 
     private final PasswordEncoder passwordEncoder;
-    private MyUserDetailsService myUserDetailsService;
+    private CustomUserDetailsService myUserDetailsService;
 
 
-    public SecurityConfig(@Lazy PasswordEncoder passwordEncoder, MyUserDetailsService myUserDetailsService) {
+    public SecurityConfig(@Lazy PasswordEncoder passwordEncoder, CustomUserDetailsService myUserDetailsService) {
         this.passwordEncoder = passwordEncoder;
         this.myUserDetailsService = myUserDetailsService;
-    }
-
-    @Bean
-    public MyUserDetailsService userDetailsService() {
-        return myUserDetailsService;
     }
 
     @Bean

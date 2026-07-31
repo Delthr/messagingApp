@@ -26,7 +26,8 @@ public class ChatController {
 
     @PostMapping("/create")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<String> createPrivateChat(@RequestBody UserDto userDto, Authentication authentication) {
+    public ResponseEntity<String> createPrivateChat(@RequestBody UserDto userDto,
+                                                    Authentication authentication) {
         chatService.createPrivateChat(userDto.username(), authentication.getName());
         return ResponseEntity.ok("Chat is created!");
     }

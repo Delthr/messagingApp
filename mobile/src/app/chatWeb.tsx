@@ -1,7 +1,8 @@
+import { getUserId } from '@/utils/storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
-import { useState } from "react";
-import { FlatList, Image, Platform, SafeAreaView, Text, TouchableOpacity, useColorScheme, View } from "react-native";
+import { useEffect, useState } from "react";
+import { FlatList, Image, Platform, SafeAreaView, Text, TextInput, TouchableOpacity, useColorScheme, View } from "react-native";
 import stylesBackground from './styles/baseStyle';
 import styles from './styles/chatWebStyle';
 
@@ -58,7 +59,96 @@ export default function Index() {
         </TouchableOpacity>
     );
 
+    function formatDateToTime(dateString: string): string {
+        const date = new Date(dateString);
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
 
+    const messages = [
+        {
+            messageId: "msg-1",
+            senderId: "user-2",
+            senderUsername: "Alex standard",
+            text: "Hey! How's the new project coming along?",
+            sendetAt: "2026-07-30T12:00"
+        },
+        {
+            messageId: "msg-2",
+            senderId: "user-2",
+            senderUsername: "Alex standard",
+            text: "Did you manage to fix that layout issue in React Native?",
+            sendetAt: "2026-07-30T12:01"
+        },
+        {
+            messageId: "msg-3",
+            senderId: "user-1", // Zastąp "user-1" swoim currentUserId, żeby przetestować prawe dymki
+            senderUsername: "Me",
+            text: "Yeah, got it sorted! Spent all day debugging it, but it works fine now.",
+            sendetAt: "2026-07-30T12:03"
+        },
+        {
+            messageId: "msg-4",
+            senderId: "user-3",
+            senderUsername: "Sarah Jenkins",
+            text: "Awesome news! Is the backend ready for testing as well?",
+            sendetAt: "2026-07-30T12:05"
+        },
+        {
+            messageId: "msg-5",
+            senderId: "user-3",
+            senderUsername: "Sarah Jenkins",
+            text: "We need to push this to production by tomorrow.",
+            sendetAt: "2026-07-30T12:06"
+        },
+        {
+            messageId: "msg-6",
+            senderId: "user-1",
+            senderUsername: "Me",
+            text: "Almost! Just finishing up the messaging features and we're good to go. 🚀",
+            sendetAt: "2026-07-30T12:10"
+        },
+        {
+            messageId: "msg-7",
+            senderId: "user-1",
+            senderUsername: "Me",
+            text: "Almost! Just finishing up the messaging features and we're good to go. ",
+            sendetAt: "2026-07-30T12:10"
+        },
+    ];
+
+
+    type MessageProps = {
+        messageId: string,
+        senderId: string,
+        senderUsername: string,
+        text: string,
+        sendetAt: string,
+        showUsername: boolean,
+    };
+
+
+    const Message = ({ messageId, senderId, senderUsername, text, sendetAt, showUsername }: MessageProps) => {
+        const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+        useEffect(() => {
+            const fetchUserId = async () => {
+                const userId = await getUserId();
+                setCurrentUserId(userId);
+            };
+
+            fetchUserId();
+        }, []);
+        // zmien user 1 na currnetUserId
+        const isMessageSended = "user-1" === senderId;
+        return (
+            <View style={[styles.messages, isMessageSended ? styles.myMessgae : styles.othersMessage]}>
+                {showUsername && !isMessageSended && (
+                    <Text style={styles.nickname}>{senderUsername}</Text>
+                )}
+                <Text style={styles.text}>{text}</Text>
+                <Text style={styles.time}>{formatDateToTime(sendetAt)}</Text>
+            </View>
+        )
+    };
     async function goToChat(chatId: string) {
         if (Platform.OS === 'web') {
             router.push({
@@ -90,7 +180,38 @@ export default function Index() {
                         />
                     </View>
                     <View style={styles.subTableRight}>
-                        <Text>prawa</Text>
+                        <FlatList
+                            data={messages}
+                            keyExtractor={(item) => item.messageId}
+
+                            renderItem={({ item, index }) => {
+                                const previousMessage = messages[index - 1];
+                                const showUsername = !previousMessage || previousMessage.senderId !== item.senderId;
+
+                                return (
+                                    <Message
+                                        messageId={item.messageId}
+                                        senderId={item.senderId}
+                                        senderUsername={item.senderUsername}
+                                        text={item.text}
+                                        sendetAt={item.sendetAt}
+                                        showUsername={showUsername}
+                                    />
+                                );
+                            }}
+                        />
+                        <View style={styles.createMessageBar}>
+                            <View style={styles.typePlace}>
+                                <TextInput style={styles.typeText} placeholder='Message'>
+
+                                </TextInput>
+                            </View>
+                            <View style={styles.sendButtonPlace}>
+                                <TouchableOpacity onPress={() => console.log('Sending message!')}>
+                                    <Image source={require('../../assets/images/sendIcon.png')} style={styles.avatar} />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
                     </View>
                 </View>
             </SafeAreaView>
