@@ -64,4 +64,11 @@ public class UserOperationsController {
         userService.saveUser(newUser);
         return ResponseEntity.status(201).body("User has been created!");
     }
+
+    @GetMapping("/findAUserId")
+    public ResponseEntity<?> findUserId(@RequestParam String userName){
+     var user = userService.findUserByUsername(userName);
+     if (user.isEmpty())return ResponseEntity.notFound().build();
+    return ResponseEntity.ok(new UserDto(user.get().getId(), user.get().getUsername(), user.get().getEmail()));
+    }
 }

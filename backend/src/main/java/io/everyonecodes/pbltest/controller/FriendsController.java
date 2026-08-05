@@ -1,14 +1,15 @@
 package io.everyonecodes.pbltest.controller;
 
 import io.everyonecodes.pbltest.model.CustomUserDetails;
+import io.everyonecodes.pbltest.model.User;
 import io.everyonecodes.pbltest.service.FriendshipService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Controller
@@ -23,16 +24,34 @@ public class FriendsController {
     @GetMapping("/friendsList")
     public ResponseEntity<?> getFriendsList(Authentication authentication){
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        List<UserDto> resultTest = List.of(
-                new UserDto(UUID.randomUUID(), "adam", "a@gmail.com"),
-                new UserDto(UUID.randomUUID(), "Nidal", "ndl@gmail.com"),
-                new UserDto(UUID.randomUUID(), "MJ", "mj@gmail.com"),
-                new UserDto(UUID.randomUUID(), "Bernard", "br@gmail.com"),
-                new UserDto(UUID.randomUUID(), "Jola", "jl@gmail.com"),
-                new UserDto(UUID.randomUUID(), "MOMO", "momo@gmail.com")
-
-        );
         List<UserDto> friends = friendshipService.getFriendsList(userDetails.getUser().getId());
-        return ResponseEntity.ok(resultTest);
+        return ResponseEntity.ok(friends);
+    }
+
+    @PostMapping("/sendRequest")
+    public ResponseEntity<String> sendRequest(@RequestBody String id, Authentication authentication){
+        friendshipService.sendFriendRequest(((CustomUserDetails) Objects.requireNonNull(authentication.getPrincipal())).getUser().getId(), UUID.fromString(id));
+        return ResponseEntity.ok("Request has been sent!");
+    }
+
+    @GetMapping("/requests")
+    public ResponseEntity<?> getRequests(Authentication authentication){
+        CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
+        return ResponseEntity.ok(friendshipService.getRequestsList(customUserDetails.getUser().getId()));
+    }
+
+    @PostMapping("/accept")
+    public ResponseEntity<String> acceptRequest(@RequestBody String friendshipId,
+                                                Authentication authentication){
+        CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
+        friendshipService.acceptFriendRequest(UUID.fromString(friendshipId),customUserDetails.getUser().getId());
+        return ResponseEntity.ok().build();
+    }
+    @PostMapping("/reject")
+    public ResponseEntity<String> rejectRequest(@RequestBody String friendshipId,
+                                                Authentication authentication){
+        CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
+        friendshipService.rejectOrRemoveFriend(UUID.fromString(friendshipId),customUserDetails.getUser().getId());
+        return ResponseEntity.ok().build();
     }
 }

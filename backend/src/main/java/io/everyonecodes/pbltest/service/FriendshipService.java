@@ -1,10 +1,12 @@
 package io.everyonecodes.pbltest.service;
 
+import io.everyonecodes.pbltest.controller.FriendshipDto;
 import io.everyonecodes.pbltest.controller.UserDto;
 import io.everyonecodes.pbltest.model.Friendship;
 import io.everyonecodes.pbltest.model.User;
 import io.everyonecodes.pbltest.repository.FriendshipRepository;
 import io.everyonecodes.pbltest.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -21,6 +23,7 @@ public class FriendshipService {
         this.userRepository = userRepository;
     }
 
+    @Transactional
     public void sendFriendRequest(UUID senderId, UUID receiverId) {
         if (senderId.equals(receiverId)) {
             throw new IllegalStateException("You cant send a request to yourself.");
@@ -49,6 +52,7 @@ public class FriendshipService {
             friendship.setStatus("PENDING");
             friendshipRepository.save(friendship);
         }
+        System.out.println("dziala");
     }
 
     public void acceptFriendRequest(UUID friendshipId, UUID receiverId) {
@@ -86,6 +90,7 @@ public class FriendshipService {
                 UUID friendsId = f.getReceiver().getId();
                 String friendsUsername = f.getReceiver().getUsername();
                 String friendsEmail = f.getReceiver().getEmail();
+
                 friendListDto.add(new UserDto(friendsId, friendsUsername, friendsEmail));
             } else {
                 UUID friendsId = f.getInviting().getId();
@@ -96,4 +101,21 @@ public class FriendshipService {
         }
         return friendListDto;
     }
+
+    public List<FriendshipDto> getRequestsList(UUID userId) {
+        String status = "PENDING";
+        var result = friendshipRepository.findAllByStatusAndReceiverId(status, userId);
+        List<FriendshipDto> friendListDto = new ArrayList<>();
+
+        for (Friendship f : result) {
+            UUID friendsId = f.getInviting().getId();
+            String friendsUsername = f.getInviting().getUsername();
+            String friendsEmail = f.getInviting().getEmail();
+            UUID friendshipId = f.getId();
+
+            friendListDto.add(new FriendshipDto(friendsId, friendsUsername, friendsEmail, friendshipId));
+        }
+        return friendListDto;
+    }
+
 }

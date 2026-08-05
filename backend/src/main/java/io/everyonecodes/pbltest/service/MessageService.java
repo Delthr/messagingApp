@@ -35,7 +35,15 @@ public class MessageService {
         var chat = chatRepository.findById(chatId).orElseThrow(
                 () -> new jakarta.persistence.EntityNotFoundException("Chat not found!")
         );
-        ChatMessageDto chatMessageDto = new ChatMessageDto(chatId, loggedInUser.getId(), text, LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+        ChatMessageDto chatMessageDto = new ChatMessageDto(
+                UUID.randomUUID(),
+                chatId,
+                loggedInUser.getId(),
+                loggedInUser.getUsername(),
+                text,
+                LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).toString(),
+                "SENT"
+        );
         boolean isParticipant = chat.getParticipants().stream()
                 .anyMatch(p -> p.getId()
                         .getUserId()
@@ -62,10 +70,13 @@ public class MessageService {
                 PageRequest.of(page, 20, Sort.by("createdAt").descending())
         );
         return result.map(e -> new ChatMessageDto(
+                e.getId(),
                 chat.getId(),
                 e.getSender().getId(),
+                e.getSender().getUsername(),
                 e.getText(),
-                e.getCreatedAt()
+                e.getCreatedAt().toString(),
+                e.getStatus()
         ));
     }
 
@@ -76,8 +87,8 @@ public class MessageService {
         Message message = new Message();
         message.setChat(chat);
         message.setSender(sender);
-        message.setCreatedAt(chatMessageDto.sentAt());
-        message.setText(chatMessageDto.content());
+        message.setCreatedAt(LocalDateTime.parse(chatMessageDto.time()));
+        message.setText(chatMessageDto.text());
         message.setStatus("Delivered");
 
         messageRepository.save(message);

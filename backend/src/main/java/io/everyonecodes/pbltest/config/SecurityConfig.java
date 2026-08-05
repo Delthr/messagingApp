@@ -59,9 +59,9 @@ public class SecurityConfig {
                 // 3. Określamy dostęp do endpointów
                 .authorizeHttpRequests(registry -> registry
                         // Publiczne endpointy autentykacji (np. /api/auth/login, /api/auth/register)
-                        .requestMatchers("/api/login", "/api/register").permitAll()
+                        .requestMatchers("/api/**", "/error").permitAll()
                         // Publiczne zasoby statyczne (jeśli serwujesz widoki HTML/pliki)
-                        .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+                        .requestMatchers("/ms-native","/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                         // Wszystkie pozostałe żądania wymagają tokena JWT
                         .anyRequest().authenticated()
                 )

@@ -14,6 +14,7 @@ export const styles = StyleSheet.create({
         alignItems: 'stretch',
     },
     subTableRight: {
+        marginTop: 30,
         flex: 1,
         paddingHorizontal: 12,
         alignItems: 'stretch',
@@ -180,6 +181,64 @@ export const styles = StyleSheet.create({
     },
     goToChatButton: {
 
+    },
+    addChatButton: {
+        margin: 40,
+        alignSelf: 'flex-end',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        width: '85%',
+        maxHeight: '70%',
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 20,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 15,
+        textAlign: 'center',
+    },
+    friendRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+    },
+    friendInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    username: {
+        marginLeft: 12,
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    actionButton: {
+        padding: 8,
+    },
+    smallIcon: {
+        width: 24,
+        height: 24,
+    },
+    closeButton: {
+        marginTop: 15,
+        padding: 10,
+        backgroundColor: '#ff4d4d',
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    closeButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
     },
 });
 

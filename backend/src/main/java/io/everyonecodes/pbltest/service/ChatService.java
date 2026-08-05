@@ -38,26 +38,40 @@ public class ChatService {
 
     @Transactional
     public Chat createPrivateChat(String usernameA, String usernameB) {
-        User userA = userService.findUserByUsername(usernameA).orElseThrow(() -> new RuntimeException("User A not found"));
-        User userB = userService.findUserByUsername(usernameB).orElseThrow(() -> new RuntimeException("User B not found"));
-        Chat chat = new Chat();
-        Chat savedChat;
-        if (friendshipService.getFriendsList(userA.getId()).contains(new UserDto(userB.getId(), userB.getUsername(), userB.getEmail()))) {
-            chat.setGroupChat(false);
-            chat.setCreatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+        if (usernameA.equals(usernameB)) {
+            throw new IllegalArgumentException("You cannot create a chat with yourself!");
+        }
 
-            savedChat = chatRepository.save(chat);
+        User userA = userService.findUserByUsername(usernameA)
+                .orElseThrow(() -> new RuntimeException("User A not found"));
+        User userB = userService.findUserByUsername(usernameB)
+                .orElseThrow(() -> new RuntimeException("User B not found"));
 
-            ChatParticipant chatParticipantA = chatParticipantService.createParticipant(userA, savedChat);
-            ChatParticipant chatParticipantB = chatParticipantService.createParticipant(userB, savedChat);
+        Optional<Chat> existingChat = chatRepository.findPrivateChatBetweenUsers(userA.getId(), userB.getId());
+        if (existingChat.isPresent()) {
+            return existingChat.get();
+        }
 
-            savedChat.setParticipants(List.of(chatParticipantA, chatParticipantB));
-            return savedChat;
-        } else {
+        boolean isFriend = friendshipService.getFriendsList(userA.getId())
+                .stream()
+                .anyMatch(friend -> friend.id().equals(userB.getId()));
+
+        if (!isFriend) {
             throw new jakarta.persistence.EntityNotFoundException("You're not friends!");
         }
-    }
 
+
+        Chat chat = new Chat();
+        chat.setGroupChat(false);
+        chat.setCreatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+        Chat savedChat = chatRepository.save(chat);
+
+
+        ChatParticipant participantA = chatParticipantService.createParticipant(userA, savedChat);
+        ChatParticipant participantB = chatParticipantService.createParticipant(userB, savedChat);
+
+        return savedChat;
+    }
     @Transactional
     public void addUserToChat(UUID chatId, String receiverUsername, String senderUsername) {
         var chat = chatRepository.findById(chatId).orElseThrow(

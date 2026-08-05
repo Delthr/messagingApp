@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -32,4 +33,10 @@ public interface ChatRepository extends JpaRepository<Chat, UUID> {
     WHERE p.user.id = :userId
 """)
     List<ChatDto> findAllUserChatsWithLastMessage(@Param("userId") UUID userId);
+
+
+    @Query("SELECT c FROM Chat c WHERE c.isGroupChat = false AND " +
+            "EXISTS (SELECT p1 FROM ChatParticipant p1 WHERE p1.chat = c AND p1.user.id = :userAId) AND " +
+            "EXISTS (SELECT p2 FROM ChatParticipant p2 WHERE p2.chat = c AND p2.user.id = :userBId)")
+    Optional<Chat> findPrivateChatBetweenUsers(@Param("userAId") UUID userAId, @Param("userBId") UUID userBId);
 }

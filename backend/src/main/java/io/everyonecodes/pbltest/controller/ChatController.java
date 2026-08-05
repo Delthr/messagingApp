@@ -1,5 +1,6 @@
 package io.everyonecodes.pbltest.controller;
 
+import io.everyonecodes.pbltest.model.Chat;
 import io.everyonecodes.pbltest.repository.UserRepository;
 import io.everyonecodes.pbltest.service.ChatService;
 import lombok.Getter;
@@ -16,20 +17,20 @@ import java.util.UUID;
 @RequestMapping("/api/chat")
 public class ChatController {
 
-    private final UserRepository userRepository;
+
     private final ChatService chatService;
 
-    public ChatController(UserRepository userRepository, ChatService chatService) {
-        this.userRepository = userRepository;
+    public ChatController(ChatService chatService) {
         this.chatService = chatService;
     }
 
+
     @PostMapping("/create")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<String> createPrivateChat(@RequestBody UserDto userDto,
-                                                    Authentication authentication) {
-        chatService.createPrivateChat(userDto.username(), authentication.getName());
-        return ResponseEntity.ok("Chat is created!");
+    public ResponseEntity<Chat> createPrivateChat(@RequestBody UserDto userDto,
+                                                  Authentication authentication) {
+        var result = chatService.createPrivateChat(userDto.username(), authentication.getName());
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/{chatId}/add")

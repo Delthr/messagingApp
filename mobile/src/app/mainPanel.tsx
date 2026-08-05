@@ -1,8 +1,7 @@
-import { getToken } from '@/utils/storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from "react";
-import { FlatList, Image, Platform, SafeAreaView, Text, TextInput, TouchableOpacity, useColorScheme, View } from "react-native";
+import { FlatList, Image, Modal, Platform, SafeAreaView, Text, TextInput, TouchableOpacity, useColorScheme, View } from "react-native";
 import api from '../utils/axioss';
 import stylesBackground from './styles/baseStyle';
 import styles from './styles/mainPanelStyles';
@@ -24,112 +23,6 @@ export default function Index() {
     const sendedByTextTheme = isDarkMode ? styles.darkSendedByText : styles.lightSendedByText;
     const friendsButtonTheme = isDarkMode ? styles.darkFriendsButton : styles.lightFriendsButton;
 
-
-    async function moveToContactPage(id: string, username: string, email: string) {
-        router.push({
-            pathname: '/contact',
-            params: {
-                id: id,
-                username: username,
-                email: email,
-            },
-        });
-    }
-    type Chat = {
-        id: string;
-        chatName: string;
-        lastMessage: string;
-        state: string;
-    };
-    const [chats, setChats] = useState<Chat[]>([]);
-    async function gateChatsWithLastMessageAndStatus() {
-        try {
-            console.log("Requesting data");
-            const response = await api.get('/chat/allChats');
-            setChats(response.data);
-            console.log("Server response: ", response.data);
-
-            alert("Data recived sucessfully!");
-        } catch (error: any) {
-            if (error.response) {
-                console.log(error.response.status);
-                console.log(error.response.data);
-                alert("Some error hadnling.");
-            } else if (error.request) {
-                alert("Cannot connect with server.");
-            } else {
-                console.log("Ups... Something went wrong! ", error.message);
-            }
-        }
-    }
-
-    type Friend = {
-        email: string,
-        id: string,
-        username: string,
-    }
-    type RecordPropsFriends = { email: string, id: string, username: string };
-    const RecordFriends = ({ email, id, username }: RecordPropsFriends) => (
-        <TouchableOpacity style={styles.goToContactButton} onPress={() => moveToContactPage(id, username, email)}>
-            <View style={styles.friendBox}>
-                <Image source={require('../../assets/images/avatar.png')} style={styles.avatar} />
-                <View style={styles.friendData}>
-                    <Text style={styles.friendDataText}
-                        numberOfLines={1}
-                        ellipsizeMode='tail'
-                    >{username}</Text>
-                </View>
-            </View>
-        </TouchableOpacity>
-    )
-    const CHATS = [
-        {
-            id: '1',
-            name: 'My group chat',
-            lastMessage: 'Just a message, nothing more there is no co',
-        },
-        {
-            id: '2',
-            name: 'MJ',
-            lastMessage: 'Do we wanna make a smoke break?',
-        },
-        {
-            id: '3',
-            name: 'Bernard',
-            lastMessage: '67676767676767',
-        },
-        {
-            id: '4',
-            name: 'Nidal',
-            lastMessage: 'Want a cheesecake?',
-        }
-    ];
-
-    type RecordProps = {
-        id: string,
-        name: string,
-        lastMessage: string
-    };
-    const Record = ({ id, name, lastMessage }: RecordProps) => (
-        <TouchableOpacity style={styles.goToChatButton} onPress={() => goToChat(id)}>
-            <View style={[styles.contactBox, contactTheme]}>
-                <Image source={require('../../assets/images/avatar.png')} style={styles.avatar} />
-                <View style={styles.data}>
-                    <Text style={[styles.contactText, contactTextTheme]}>{name}</Text>
-                    <Text style={[styles.sendedByText, sendedByTextTheme]}
-                        numberOfLines={1}
-                        ellipsizeMode='tail'
-                    >{lastMessage}</Text>
-                </View>
-            </View>
-        </TouchableOpacity>
-    );
-
-
-    async function moveToRequests() {
-        router.push('/requests');
-    }
-
     async function goToChat(chatId: string) {
         if (Platform.OS === 'web') {
             router.push({
@@ -146,40 +39,106 @@ export default function Index() {
                 }
             });
         }
-    }
+    };
+    async function goToRequests() {
+        router.push('/requests');
+    };
 
-    const [query, setQuery] = useState('');
-    const [results, setResults] = useState<{ id: string; name: string }[]>([]);
-
-    const allUsers = [
-        { id: '1', name: 'Jola' },
-        { id: '2', name: 'Jake' },
-        { id: '3', name: 'John' },
-        { id: '4', name: 'Alice' },
-    ];
-
-    const handleSearch = (text: string) => {
-        setQuery(text);
-        if (text.length > 0) {
-            const filtered = allUsers.filter(user =>
-                user.name.toLowerCase().includes(text.toLowerCase())
-            );
-            setResults(filtered);
-        } else {
-            setResults([]);
+    async function moveToContactPage(id: string, username: string, email: string) {
+        router.push({
+            pathname: '/contact',
+            params: {
+                id: id,
+                username: username,
+                email: email,
+            },
+        });
+    };
+    type Chat = {
+        chatId: string;
+        chatName: string;
+        lastMessage: string;
+        status: string;
+    };
+    async function gateChatsWithLastMessageAndStatus(): Promise<Chat[] | null> {
+        try {
+            console.log("Requesting data");
+            const response = await api.get('/chat/allChats');
+            console.log(response.data);
+            console.log("Data recived sucessfully!");
+            return response.data;
+        } catch (error: any) {
+            if (error.response) {
+                console.log(error.response.status);
+                console.log(error.response.data);
+                alert("Some error hadnling.");
+                return null;
+            } else if (error.request) {
+                alert("Cannot connect with server.");
+                return null;
+            } else {
+                console.log("Ups... Something went wrong! ", error.message);
+                return null;
+            }
         }
     };
 
-    async function sendRequestToFriends(username: string) {
-        console.log("Added friend: ", username)
-    }
+    const [chats, setChats] = useState<Chat[]>([]);
+    useEffect(() => {
+        async function fetchChatsWithLastMessages() {
+            const chats = await gateChatsWithLastMessageAndStatus();
+            if (chats) {
+                setChats(chats);
+            }
+        };
+        fetchChatsWithLastMessages();
+    }, []);
+
+    type Friend = {
+        email: string,
+        id: string,
+        username: string,
+    };
+    type RecordPropsFriends = { email: string, id: string, username: string };
+    const RecordFriends = ({ email, id, username }: RecordPropsFriends) => (
+        <TouchableOpacity style={styles.goToContactButton} onPress={() => moveToContactPage(id, username, email)}>
+            <View style={styles.friendBox}>
+                <Image source={require('../../assets/images/avatar.png')} style={styles.avatar} />
+                <View style={styles.friendData}>
+                    <Text style={styles.friendDataText}
+                        numberOfLines={1}
+                        ellipsizeMode='tail'
+                    >{username}</Text>
+                </View>
+            </View>
+        </TouchableOpacity>
+    );
+
+
+    const Record = ({ chatId, chatName, lastMessage, status }: Chat) => (
+        <TouchableOpacity style={styles.goToChatButton} onPress={() => goToChat(chatId)}>
+            <View style={[styles.contactBox, contactTheme]}>
+                <Image source={require('../../assets/images/avatar.png')} style={styles.avatar} />
+                <View style={styles.data}>
+                    <Text style={[styles.contactText, contactTextTheme]}>{chatName}</Text>
+                    <Text style={[styles.sendedByText, sendedByTextTheme]}
+                        numberOfLines={1}
+                        ellipsizeMode='tail'
+                    >{lastMessage}</Text>
+                </View>
+            </View>
+        </TouchableOpacity>
+    );
+
+
+
+
 
 
 
 
     async function getFriends(): Promise<Friend[] | null> {
         try {
-            const token = await getToken();
             console.log("Getting Friends list");
             const response = await api.get('/friends/friendsList');
             console.log("friends loaded!")
@@ -198,7 +157,7 @@ export default function Index() {
                 return null;
             }
         }
-    }
+    };
 
     const [friends, setFriends] = useState<Friend[]>([]);
 
@@ -212,6 +171,60 @@ export default function Index() {
         fetchFriends();
     }, []);
 
+
+    type SearchResults = { email: string; id: string; username: string; };
+    const [query, setQuery] = useState('');
+    const [results, setResults] = useState<SearchResults[]>([]);
+
+    const searchUser = async (searchUsername: string) => {
+        setQuery(searchUsername);
+        if (!searchUsername.trim()) {
+            setResults([]);
+            return;
+        }
+
+        try {
+            const response = await api.get('/findAUserId', {
+                params: { userName: searchUsername }
+            });
+            const targetedUser: SearchResults = response.data;
+            console.log(response.data);
+            if (targetedUser && targetedUser.id) {
+                setResults([targetedUser]);
+                console.log("User has been found! : ", targetedUser.username);
+            } else {
+                setResults([]);
+            }
+        } catch (error) {
+            console.error(error);
+            setResults([]);
+        }
+    };
+
+    const addUser = async (targetedId: string) => {
+        if (!targetedId) return;
+        try {
+            await api.post('/friends/sendRequest', targetedId, {
+                headers: { 'Content-Type': 'text/plain' }
+            });
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const createChat = async (friend: Friend) => {
+        try {
+            const response = await api.post('/chat/create', {
+                email: friend.email,
+                id: friend.id,
+                username: friend.username,
+            })
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     return (
         <LinearGradient style={stylesBackground.gradientBackground} colors={gradientK} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }}>
             <SafeAreaView style={stylesBackground.container}>
@@ -224,7 +237,7 @@ export default function Index() {
                                 placeholder="Search for friends..."
                                 placeholderTextColor="#ccc"
                                 value={query}
-                                onChangeText={handleSearch}
+                                onChangeText={(text) => searchUser(text)}
                             />
 
                             {query.length > 0 && (
@@ -236,12 +249,12 @@ export default function Index() {
                                             <TouchableOpacity
                                                 style={styles.dropdownItem}
                                                 onPress={() => {
-                                                    sendRequestToFriends(item.name);
+                                                    addUser(item.id);
                                                     setQuery('');
                                                     setResults([]);
                                                 }}
                                             >
-                                                <Text style={styles.dropdownText}>{item.name}</Text>
+                                                <Text style={styles.dropdownText}>{item.username}</Text>
                                             </TouchableOpacity>
                                         )}
                                         ListEmptyComponent={
@@ -255,7 +268,7 @@ export default function Index() {
                             renderItem={({ item }) => <RecordFriends email={item.email} id={item.id} username={item.username} />}
                             keyExtractor={item => item.id.toString()}
                             numColumns={1} />
-                        <TouchableOpacity onPress={() => moveToRequests()}>
+                        <TouchableOpacity onPress={() => goToRequests()}>
                             <View style={styles.requestBox}>
                                 <Text style={styles.requestsButtonText}>
                                     Requests
@@ -265,12 +278,51 @@ export default function Index() {
                     </View>
                     <View style={styles.subTableRight}>
                         <FlatList
-                            data={CHATS}
-                            renderItem={({ item }) => <Record id={item.id} name={item.name} lastMessage={item.lastMessage} />}
-                            keyExtractor={item => item.id.toString()}
+                            data={chats}
+                            renderItem={({ item }) => <Record chatId={item.chatId} chatName={item.chatName} lastMessage={item.lastMessage} status={item.status} />}
+                            keyExtractor={item => item.chatId.toString()}
                         />
                     </View>
                 </View>
+                <TouchableOpacity style={styles.addChatButton} onPress={() => setIsModalVisible(true)}>
+                    <Image source={require('../../assets/images/plus.png')} style={styles.avatar} />
+                </TouchableOpacity>
+
+                <Modal
+                    visible={isModalVisible}
+                    animationType="slide"
+                    transparent={true}
+                    onRequestClose={() => setIsModalVisible(false)}
+                >
+                    <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setIsModalVisible(false)}>
+                        <TouchableOpacity activeOpacity={1} style={styles.modalContent}>
+
+                            <Text style={styles.modalTitle}>Create a chat: </Text>
+
+                            <FlatList
+                                data={friends}
+                                keyExtractor={(item) => item.id}
+                                renderItem={({ item }) => (
+                                    <View style={styles.friendRow}>
+                                        <View style={styles.friendInfo}>
+                                            <Image source={require('../../assets/images/avatar.png')} style={styles.avatar} />
+                                            <Text style={styles.username}>{item.username}</Text>
+                                        </View>
+
+                                        <TouchableOpacity style={styles.actionButton} onPress={() => createChat(item)}>
+                                            <Image source={require('../../assets/images/plus.png')} style={styles.smallIcon} />
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                            />
+
+                            <TouchableOpacity style={styles.closeButton} onPress={() => setIsModalVisible(false)}>
+                                <Text style={styles.closeButtonText}>Zamknij</Text>
+                            </TouchableOpacity>
+
+                        </TouchableOpacity>
+                    </TouchableOpacity>
+                </Modal>
             </SafeAreaView>
         </LinearGradient>
     );

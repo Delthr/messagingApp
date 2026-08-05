@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-@Controller
-@RequestMapping("/messages")
+@RestController
+@RequestMapping("/api/messages")
 public class MessageController {
     private final MessageService messageService;
 
@@ -23,10 +23,10 @@ public class MessageController {
     @PostMapping("/send")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<String> sendMessage(
-            @RequestBody ChatMessageDto chatMessageDto,
+            @RequestBody MessageDto messageDto,
             Authentication authentication) {
 
-        messageService.sendMessage(chatMessageDto.chatId(), authentication.getName(), chatMessageDto.content());
+        messageService.sendMessage(messageDto.chatId(), authentication.getName(), messageDto.text());
 
         return ResponseEntity.ok("Sent!");
     }
