@@ -22,7 +22,6 @@ export function useChatSocket(chatId: string) {
         let client: Client;
 
         const initSocket = async () => {
-            // ✅ Oczekujemy na pobranie tokenu
             const token = await getToken();
             if (!token) return;
 
@@ -46,7 +45,11 @@ export function useChatSocket(chatId: string) {
                         if (payload.eventType === 'DELETE') {
                             setMessages((prev) => prev.filter((m) => m.id !== payload.messageId));
                         } else {
-                            setMessages((prev) => [...prev, payload]);
+                            setMessages((prev) => {
+                                const exists = prev.some((m) => String(m.id) === String(payload.id));
+                                if (exists) return prev;
+                                return [payload, ...prev];
+                            });
                         }
                     });
                 },

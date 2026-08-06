@@ -54,4 +54,9 @@ public class FriendsController {
         friendshipService.rejectOrRemoveFriend(UUID.fromString(friendshipId),customUserDetails.getUser().getId());
         return ResponseEntity.ok().build();
     }
+    @PostMapping("/remove")
+    public ResponseEntity<String> removeFriend(@RequestBody String friendsId,
+                                               Authentication authentication){
+        return ResponseEntity.ok("friend has been removed!");
+    }
 }

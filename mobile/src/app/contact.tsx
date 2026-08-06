@@ -1,7 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from "react";
-import { Image, SafeAreaView, Text, TouchableOpacity, useColorScheme, View } from "react-native";
+import { Image, Modal, SafeAreaView, Text, TouchableOpacity, useColorScheme, View } from "react-native";
+import api from '../utils/axioss';
 import stylesBackground from './styles/baseStyle';
 import styles from './styles/contactStyle';
 
@@ -26,6 +27,19 @@ export default function Index() {
     async function getBack() {
         router.push('/mainPanel');
     }
+    const [modalVisible, setModalVisible] = useState(false);
+
+    async function removeFriend(id: string) {
+        try {
+            const response = await api.post('/friends/remove', {
+                friendsId: id,
+            })
+            console.log("friend has been removed!");
+            setModalVisible(false);
+        } catch (error) {
+            console.error(error);
+        }
+    }
 
     return (
         <LinearGradient style={styles.gradientBackground} colors={gradientK} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }}>
@@ -42,8 +56,37 @@ export default function Index() {
                         {username}{"\n"}
                         {email}
                     </Text>
+                    <TouchableOpacity style={styles.removeFriendButton} onPress={() => setModalVisible(true)}>
+                        <Text style={styles.removeFriendButtonText}>Remove</Text>
+                    </TouchableOpacity>
                 </View>
+                <Modal
+                    animationType="fade"
+                    transparent={true}
+                    visible={modalVisible}
+                    onRequestClose={() => setModalVisible(false)}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
+                            <Text style={styles.modalText}>Are you sure you want to remove {username} from your friends list?</Text>
+                            <View style={styles.buttonsInPopUp}>
+                                <TouchableOpacity
+                                    style={styles.removeButton}
+                                    onPress={() => removeFriend(id)}
+                                >
+                                    <Text style={{ color: '#fff' }}>Yes</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.closeButton}
+                                    onPress={() => setModalVisible(false)}
+                                >
+                                    <Text style={{ color: '#fff' }}>No</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
             </SafeAreaView>
-        </LinearGradient>
+        </LinearGradient >
     );
 }

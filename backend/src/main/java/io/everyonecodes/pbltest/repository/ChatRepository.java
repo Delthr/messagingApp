@@ -17,19 +17,21 @@ public interface ChatRepository extends JpaRepository<Chat, UUID> {
     List<Chat> findAllChatsByUserId(@Param("userId") UUID userId);
 
     @Query("""
-    SELECT new io.everyonecodes.pbltest.controller.ChatDto(
+    SELECT DISTINCT new io.everyonecodes.pbltest.controller.ChatDto(
         c.id, 
         c.name, 
         COALESCE(m.text, ''), 
-        COALESCE(m.status, 'There are no messages in this chat!')
+        COALESCE(CAST(m.status AS string), 'There are no messages in this chat!')
     )
     FROM Chat c
     JOIN c.participants p
-    LEFT JOIN c.messages m ON m.createdAt = (
-            SELECT MAX(m2.createdAt) 
-            FROM Message m2 
-            WHERE m2.chat.id = c.id
-        )
+    LEFT JOIN c.messages m ON m.id = (
+        SELECT m2.id 
+        FROM Message m2 
+        WHERE m2.chat.id = c.id 
+        ORDER BY m2.createdAt DESC, m2.id DESC 
+        LIMIT 1
+    )
     WHERE p.user.id = :userId
 """)
     List<ChatDto> findAllUserChatsWithLastMessage(@Param("userId") UUID userId);
