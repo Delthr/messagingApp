@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ChatService {
@@ -41,7 +42,7 @@ public class ChatService {
         if (usernameA.equals(usernameB)) {
             throw new IllegalArgumentException("You cannot create a chat with yourself!");
         }
-
+// unlock it
         User userA = userService.findUserByUsername(usernameA)
                 .orElseThrow(() -> new RuntimeException("User A not found"));
         User userB = userService.findUserByUsername(usernameB)
@@ -72,6 +73,7 @@ public class ChatService {
 
         return savedChat;
     }
+
     @Transactional
     public void addUserToChat(UUID chatId, String receiverUsername, String senderUsername) {
         var chat = chatRepository.findById(chatId).orElseThrow(
@@ -98,41 +100,6 @@ public class ChatService {
         }
     }
 
-    @Transactional
-    public void deleteUserFromChat(UUID chatId, String requesterUsername, String requestedUsername) {
-        var chat = chatRepository.findById(chatId).orElseThrow(
-                () -> new jakarta.persistence.EntityNotFoundException("Chat not found!")
-        );
-        var requesterUser = userService.findUserByUsername(requesterUsername).orElseThrow(
-                () -> new jakarta.persistence.EntityNotFoundException("User " + requesterUsername + " has not been found!")
-        );
-        var requestedUser = userService.findUserByUsername(requestedUsername).orElseThrow(
-                () -> new jakarta.persistence.EntityNotFoundException("User " + requestedUsername + " has not been found!")
-        );
-        boolean isRequesterParticipant = chat.getParticipants().stream()
-                .anyMatch(p -> p.getId()
-                        .getUserId()
-                        .equals(requesterUser.getId()));
-        boolean isRequestedParticipant = chat.getParticipants().stream()
-                .anyMatch(p -> p.getId()
-                        .getUserId()
-                        .equals(requestedUser.getId()));
-        var participantList = chat.getParticipants();
-        participantList.removeIf(chP -> chP.getId().getUserId().equals(requestedUser.getId()));
-    }
-
-    @Transactional
-    public void removeChat(UUID chatId, String requesterUsername) {
-        var requesterUser = userService.findUserByUsername(requesterUsername).orElseThrow(
-                () -> new jakarta.persistence.EntityNotFoundException("User " + requesterUsername + " has not been found!")
-        );
-        var chat = chatRepository.findById(chatId).orElseThrow(
-                () -> new jakarta.persistence.EntityNotFoundException("Chat not found!")
-        );
-        if (chat.getParticipants().stream().anyMatch(chP -> chP.getId().getUserId().equals(requesterUser.getId()))) {
-            chatRepository.delete(chat);
-        }
-    }
 
     @Transactional(readOnly = true)
     public List<ChatDto> getUserChats(String username) {
@@ -140,5 +107,51 @@ public class ChatService {
                 () -> new jakarta.persistence.EntityNotFoundException("User " + username + " has not been found!")
         );
         return chatRepository.findAllUserChatsWithLastMessage(user.getId());
+    }
+
+    @Transactional
+    public void changeChatName(String newChatName, String chatId, String username) {
+        var chat = getChatWithUserValidation(chatId, username);
+        chat.setName(newChatName);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserDto> getAllChatUsers(String chatId, String username) {
+        var chat = getChatWithUserValidation(chatId, username);
+        return chat.getParticipants().stream()
+                .map(chp -> new UserDto(chp.getUser().getId(), chp.getUser().getUsername(), chp.getUser().getEmail())).toList();
+    }
+
+    @Transactional
+    public void deleteChat(String chatId, String username){
+        var chat = getChatWithUserValidation(chatId, username);
+        chatRepository.delete(chat);
+    }
+
+    @Transactional
+    public void deleteUserFromChat(String username, String chatId, String usernameToBeDeleted){
+    var chat = getChatWithUserValidation(chatId, username);
+    var userToBeDeleted = userService.validateUser(usernameToBeDeleted);
+    var removed = chat.getParticipants()
+            .removeIf(chp -> chp.getUser().equals(userToBeDeleted));
+    if (!removed){
+        throw new jakarta.persistence.EntityNotFoundException("User is not in chat!");
+    }
+    }
+
+    private Chat getChatWithUserValidation(String chatId, String username) {
+        var user = userService.validateUser(username);
+        var chat = chatRepository.findById(UUID.fromString(chatId)).orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Chat not found!"));
+        var isUserPartOfChat = userIsPartOfChat(user, UUID.fromString(chatId));
+        if (!isUserPartOfChat) {
+            throw new org.springframework.security.access.AccessDeniedException("You don't have permission!");
+        }
+        return chat;
+    }
+
+    public boolean userIsPartOfChat(User user, UUID chatId) {
+        return chatRepository.findById(chatId).orElseThrow(
+                        () -> new jakarta.persistence.EntityNotFoundException("Chat not found!"))
+                .getParticipants().stream().anyMatch(ch -> ch.getUser().equals(user));
     }
 }

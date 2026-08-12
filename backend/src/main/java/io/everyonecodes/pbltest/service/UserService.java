@@ -33,4 +33,8 @@ public class UserService  {
     public void saveUser(User user){
         userRepository.save(user);
     }
+
+    public User validateUser(String username){
+        return userRepository.findUserByUsername(username).orElseThrow(()-> new jakarta.persistence.EntityNotFoundException("User not found!"));
+    }
 }

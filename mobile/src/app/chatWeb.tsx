@@ -9,13 +9,17 @@ import styles from './styles/chatWebStyle';
 import { useChatSocket } from '@/utils/useChatSocket';
 import api from '../utils/axioss';
 
+import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
+
 export default function Index() {
-    const { id: chatId } = useLocalSearchParams<{ id: string }>();
+    const { id: chatId, } = useLocalSearchParams<{ id: string }>();
     const [inputText, setInputText] = useState('');
     const [loadingHistory, setLoadingHistory] = useState(true);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const inputRef = useRef<TextInput>(null);
     const isSendingRef = useRef(false);
+
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
@@ -38,9 +42,31 @@ export default function Index() {
         status: string;
     };
 
+    function handleEmojiClick(emojiData: EmojiClickData) {
+        setInputText((prev) => prev + emojiData.emoji);
+        setTimeout(() => {
+            inputRef.current?.focus();
+        }, 10);
+    };
+
+    useEffect(() => {
+        if (Platform.OS !== 'web') return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setShowEmojiPicker(false);
+                inputRef.current?.focus();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
     async function gateChatsWithLastMessageAndStatus(): Promise<Chat[] | null> {
         try {
             const response = await api.get('/chat/allChats');
+            console.log(response.data);
             return response.data;
         } catch (error: any) {
             console.log("Error fetching chats: ", error);
@@ -52,7 +78,12 @@ export default function Index() {
     useEffect(() => {
         async function fetchChatsWithLastMessages() {
             const chatsData = await gateChatsWithLastMessageAndStatus();
-            if (chatsData) setChats(chatsData);
+            if (chatsData) {
+                const uniqueChats = Array.from(
+                    new Map(chatsData.map(item => [item.chatId, item])).values()
+                );
+                setChats(uniqueChats);
+            };
         };
         fetchChatsWithLastMessages();
     }, []);
@@ -138,6 +169,7 @@ export default function Index() {
         fetchHistory();
     }, [chatId]);
 
+
     const fetchMoreMessages = async () => {
         if (loadingMore || !hasMore || !chatId || loadingHistory) return;
 
@@ -180,6 +212,18 @@ export default function Index() {
             });
 
             if (response.data) {
+                const res = response.data;
+
+                const normalizedMessage = {
+                    id: res.id || res.messageId || Date.now().toString(),
+                    chatId: res.chatId || chatId,
+                    text: res.text || res.content || textToSend,
+                    senderId: res.senderId || res.userId || res.authorId || currentUserId,
+                    senderUsername: res.senderUsername || res.username || '',
+                    time: res.time || res.createdAt || res.sendetAt || new Date().toISOString(),
+                    status: res.status || 'SENT'
+                };
+
                 setChats(prevChats =>
                     prevChats.map(chat =>
                         chat.chatId === chatId
@@ -187,6 +231,16 @@ export default function Index() {
                             : chat
                     )
                 );
+
+                setMessages((prevMessages: any[]) => {
+                    const currentList = Array.isArray(prevMessages) ? prevMessages : [];
+                    const alreadyExists = currentList.some(
+                        (msg) => String(msg.id) === String(normalizedMessage.id)
+                    );
+
+                    if (alreadyExists) return currentList;
+                    return [normalizedMessage, ...currentList];
+                });
             }
         } catch (error) {
             console.log('Error sending message: ', error);
@@ -210,6 +264,18 @@ export default function Index() {
         }
     }
 
+    function goToChatSettings(chatIdToPass: string, chatNameToPass: string) {
+        router.push({
+            pathname: '/chatSettings',
+            params: {
+                id: chatIdToPass,
+                chatName: chatNameToPass,
+            },
+        });
+    }
+    const chatName = chats.find(e => e.chatId === chatId)?.chatName ?? '';
+
+
     return (
         <LinearGradient style={stylesBackground.gradientBackground} colors={gradientK} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }}>
             <SafeAreaView style={stylesBackground.container}>
@@ -223,6 +289,15 @@ export default function Index() {
                         />
                     </View>
                     <View style={styles.subTableRight}>
+                        <View style={styles.topSubTableRight}>
+
+                            <Image source={require('../../assets/images/chatIcon.png')} style={styles.chatIcon} />
+                            <Text style={styles.chatName}>{chatName}</Text>
+                            <TouchableOpacity onPress={() => goToChatSettings(chatId, chatName)}>
+                                <Image style={styles.more} source={require('../../assets/images/more.png')} />
+                            </TouchableOpacity>
+
+                        </View>
                         <FlatList
                             inverted
                             data={Array.isArray(messages) ? messages : []}
@@ -260,6 +335,19 @@ export default function Index() {
                                 );
                             }}
                         />
+
+                        {showEmojiPicker && Platform.OS === 'web' && (
+                            <View
+                                style={{ position: 'absolute', bottom: 70, right: 60, zIndex: 1000 }}
+                                {...Platform.select({ web: { onMouseDown: (e: any) => e.preventDefault() } })}
+                            >
+                                <EmojiPicker
+                                    onEmojiClick={handleEmojiClick}
+                                    theme={isDarkMode ? ('dark' as any) : ('light' as any)}
+                                />
+                            </View>
+                        )}
+
                         <View style={styles.createMessageBar}>
                             <View style={styles.typePlace}>
                                 <TextInput
@@ -279,6 +367,16 @@ export default function Index() {
                                     }}
                                 />
                             </View>
+                            <TouchableOpacity
+                                style={styles.emojiButtonPlace}
+                                onPress={() => {
+                                    setShowEmojiPicker((prev) => !prev);
+                                    setTimeout(() => inputRef.current?.focus(), 10);
+                                }}
+                                {...Platform.select({ web: { onMouseDown: (e: any) => e.preventDefault() } })}
+                            >
+                                <Text style={{ fontSize: 20 }}>😀</Text>
+                            </TouchableOpacity>
                             <View style={styles.sendButtonPlace}>
                                 <TouchableOpacity
                                     onPress={hanldeSendMessage}

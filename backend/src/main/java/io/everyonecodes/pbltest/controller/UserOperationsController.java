@@ -42,6 +42,7 @@ public class UserOperationsController {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             String token = jwtService.generateToken(userDetails);
+            System.out.println("ok1");
             return ResponseEntity.ok(new AuthResponseDto(token, userDetails.getUser().getId()));
         } catch (BadCredentialsException e){
             return ResponseEntity.status(401).body("Wrong login or password!");

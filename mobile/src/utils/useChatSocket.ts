@@ -5,7 +5,7 @@ import { getToken } from "./storage";
 
 const getBrokerURL = () => {
     if (Platform.OS === 'web') {
-        return 'ws://localhost:9999/ms-native';
+        return 'ws://192.168.1.135:9999/ms-native';
     } else {
         return 'ws://192.168.1.108:9999/ms-native';
     }

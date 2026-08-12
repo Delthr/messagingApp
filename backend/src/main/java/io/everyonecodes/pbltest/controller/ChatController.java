@@ -33,28 +33,20 @@ public class ChatController {
         return ResponseEntity.ok(result);
     }
 
-    @PostMapping("/{chatId}/add")
+    @PostMapping("/add")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<String> addNewUserToAChat(@RequestBody UserDto receiverDto,
-                                                    @PathVariable UUID chatId,
+    public ResponseEntity<String> addNewUserToAChat(@RequestBody AddUserToChatDto receiverDto,
                                                     Authentication authentication){
-       chatService.addUserToChat(chatId, receiverDto.username(), authentication.getName());
+       chatService.addUserToChat(UUID.fromString(receiverDto.chatId()), receiverDto.username(), authentication.getName());
 
         return  ResponseEntity.ok("User " +  receiverDto.username() + " has been invited!");
     }
-    @DeleteMapping("/{chatId}/deleteUser")
+
+    @DeleteMapping("/{chatId}/deleteChat")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<String> deleteUserFromChat(@RequestBody UserDto userToDeleteDto,
-                                                     @PathVariable UUID chatId,
-                                                     Authentication authentication){
-        chatService.deleteUserFromChat(chatId, authentication.getName(), userToDeleteDto.username());
-    return ResponseEntity.ok("User " + userToDeleteDto.username() + " has been removed from chat!");
-    }
-    @DeleteMapping("/{chatId}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<String> deleteChat(@PathVariable UUID chatId,
+    public ResponseEntity<String> deleteChat(@PathVariable String chatId,
                                              Authentication authentication){
-        chatService.removeChat(chatId, authentication.getName());
+        chatService.deleteChat(chatId, authentication.getName());
 
         return ResponseEntity.ok("Chat has been deleted!");
     }
@@ -63,5 +55,27 @@ public class ChatController {
     @PreAuthorize("isAuthenticated()")
     public List<ChatDto> getAllUserChats(Authentication authentication){
         return chatService.getUserChats(authentication.getName());
+    }
+
+    @PostMapping("/changeChatName")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<String> changeChatName(@RequestBody ChangeChatNameDto changeChatNameDto, Authentication authentication){
+        chatService.changeChatName(changeChatNameDto.newChatName(), changeChatNameDto.chatId(), authentication.getName());
+        return ResponseEntity.ok("Name has been change!");
+    }
+
+
+    @GetMapping("/{chatId}/getAllChatUsers")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getAllChatUsers(@PathVariable String chatId, Authentication authentication){
+        var result = chatService.getAllChatUsers(chatId, authentication.getName());
+        return ResponseEntity.ok(result);
+    }
+
+    @DeleteMapping("/{chatId}/deleteUserFromChat/{usernameToBeDeleted}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<String> deleteUserFromAChat(@PathVariable String chatId, @PathVariable String usernameToBeDeleted, Authentication authentication){
+    chatService.deleteUserFromChat(authentication.getName(), chatId, usernameToBeDeleted);
+    return ResponseEntity.ok("User has been deleted!");
     }
 }

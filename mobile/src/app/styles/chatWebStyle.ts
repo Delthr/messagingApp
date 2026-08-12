@@ -8,6 +8,12 @@ export const styles = StyleSheet.create({
         width: '100%',
         flex: 1,
     },
+    topSubTableRight: {
+        borderWidth: 2,
+        borderRadius: 8,
+        borderColor: "#919090dc",
+        flexDirection: 'row',
+    },
     subTableLeft: {
         minWidth: 180,
         width: '20%',
@@ -22,7 +28,7 @@ export const styles = StyleSheet.create({
     },
     contactBox: {
         width: '100%',
-        borderColor: '#fff',
+        borderColor: '#707070',
         borderRadius: 20,
         borderWidth: 2,
         flexDirection: 'row',
@@ -31,6 +37,7 @@ export const styles = StyleSheet.create({
         marginBottom: 8,
     },
     contactText: {
+        color: '#ffffff',
         marginLeft: 5,
         marginRight: 5,
         fontSize: Math.max(14, width * 0.012),
@@ -39,6 +46,7 @@ export const styles = StyleSheet.create({
     lightContactText: {},
 
     sendedByText: {
+        color: '#dcdde0',
         marginLeft: 5,
         marginRight: 5,
         fontSize: Math.max(10, width * 0.009),
@@ -57,8 +65,6 @@ export const styles = StyleSheet.create({
         flexShrink: 1,
     },
 
-
-    // messages
     messages: {
         padding: 10,
         marginVertical: 4,
@@ -71,7 +77,7 @@ export const styles = StyleSheet.create({
     },
     othersMessage: {
         alignSelf: 'flex-start',
-        backgroundColor: '#E4E6EB',
+        backgroundColor: '#4f5052',
     },
     myAvatar: {
 
@@ -81,12 +87,12 @@ export const styles = StyleSheet.create({
     },
     nickname: {
         fontSize: 10,
-        color: '#65676B',
+        color: '#dcdde0',
         marginBottom: 2,
     },
     text: {
         fontSize: 15,
-        color: '#000',
+        color: '#f3efef',
     },
     time: {
         fontSize: 10,
@@ -96,20 +102,48 @@ export const styles = StyleSheet.create({
     createMessageBar: {
         width: '100%',
         flexDirection: 'row',
+        alignItems: 'center',
     },
     typePlace: {
-        width: '90%',
+        flex: 1,
         borderRadius: 20,
         borderWidth: 2,
+        borderColor: '#ada8a8',
     },
     typeText: {
-        fontSize: 20,
+        color: '#dcdde0',
+        fontSize: 14,
         marginLeft: 10,
     },
+    emojiButtonPlace: {
+        padding: 8,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     sendButtonPlace: {
-
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    chatName: {
+        alignSelf: 'center',
+        textAlign: 'center',
+        marginLeft: 10,
+        marginTop: 5,
+        color: '#fffdfd',
+        fontSize: 15,
+        flex: 1,
+    },
+    more: {
+        alignSelf: 'center',
+        width: 20,
+        height: 20,
+    },
+    chatIcon: {
+        alignSelf: 'center',
+        width: 20,
+        height: 20,
     },
 });
-
 
 export default styles;

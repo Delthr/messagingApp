@@ -317,7 +317,7 @@ export default function Index() {
                             />
 
                             <TouchableOpacity style={styles.closeButton} onPress={() => setIsModalVisible(false)}>
-                                <Text style={styles.closeButtonText}>Zamknij</Text>
+                                <Text style={styles.closeButtonText}>Close</Text>
                             </TouchableOpacity>
 
                         </TouchableOpacity>

@@ -45,7 +45,6 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         return httpSecurity
-                // 1. Obsługa CORS
                 .cors(cors -> cors.configurationSource(request -> {
                     var corsConfig = new CorsConfiguration();
                     corsConfig.setAllowedOriginPatterns(List.of("*"));
@@ -54,22 +53,15 @@ public class SecurityConfig {
                     corsConfig.setAllowCredentials(true);
                     return corsConfig;
                 }))
-                // 2. Wyłączamy CSRF (przy JWT i REST API jest zbędne)
                 .csrf(AbstractHttpConfigurer::disable)
-                // 3. Określamy dostęp do endpointów
                 .authorizeHttpRequests(registry -> registry
-                        // Publiczne endpointy autentykacji (np. /api/auth/login, /api/auth/register)
                         .requestMatchers("/api/**", "/error").permitAll()
-                        // Publiczne zasoby statyczne (jeśli serwujesz widoki HTML/pliki)
                         .requestMatchers("/ms-native","/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
-                        // Wszystkie pozostałe żądania wymagają tokena JWT
                         .anyRequest().authenticated()
                 )
-                // 4. Bezstanowość (brak sesji na serwerze)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                // 5. Wpięcie filtra JWT przed domyślnym filtrem Springa
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
