@@ -14,16 +14,19 @@ export const styles = StyleSheet.create({
         alignSelf: 'center',
     },
     text: {
+        color: '#fff',
         textAlign: 'center',
         lineHeight: 30,
     },
     backButton: {
         alignSelf: 'flex-start',
+        borderColor: '#fff',
         borderWidth: 2,
         borderRadius: 40,
         margin: 10,
     },
     backButtonText: {
+        color: '#fff',
         marginLeft: 5,
         marginRight: 5,
     },

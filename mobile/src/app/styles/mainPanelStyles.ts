@@ -55,6 +55,7 @@ export const styles = StyleSheet.create({
     lightSendedByText: {},
 
     avatar: {
+        marginRight: 5,
         width: 30,
         height: 30,
         borderRadius: 25,
@@ -106,6 +107,7 @@ export const styles = StyleSheet.create({
         borderColor: '#fff',
         borderRadius: 35,
         marginBottom: 15,
+        paddingVertical: 6,
     },
     requestsButtonText: {
         fontSize: Math.max(15, width * 0.02),
@@ -186,9 +188,10 @@ export const styles = StyleSheet.create({
         fontSize: Math.max(12, width * 0.01),
     },
     emptyText: {
-
+        color: '#fff',
     },
     input: {
+        color: '#fff',
         marginLeft: 5,
         marginRight: 5,
     },
@@ -196,7 +199,8 @@ export const styles = StyleSheet.create({
 
     },
     addChatButton: {
-        margin: 40,
+        marginRight: 20,
+        marginBottom: 20,
         alignSelf: 'flex-end',
     },
     modalOverlay: {
@@ -252,6 +256,18 @@ export const styles = StyleSheet.create({
     closeButtonText: {
         color: '#fff',
         fontWeight: 'bold',
+    },
+    bottomBar: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingBottom: 20,
+        width: '100%',
+    },
+    requestButtonWrapper: {
+        width: '20%',
+        minWidth: 120,
     },
 });
 

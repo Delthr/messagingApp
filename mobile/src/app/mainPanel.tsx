@@ -234,7 +234,7 @@ export default function Index() {
                             <TextInput
                                 style={styles.input}
                                 placeholder="Search for friends..."
-                                placeholderTextColor="#ccc"
+                                placeholderTextColor="#fff"
                                 value={query}
                                 onChangeText={(text) => searchUser(text)}
                             />
@@ -267,13 +267,6 @@ export default function Index() {
                             renderItem={({ item }) => <RecordFriends email={item.email} id={item.id} username={item.username} />}
                             keyExtractor={item => item.id.toString()}
                             numColumns={1} />
-                        <TouchableOpacity onPress={() => goToRequests()}>
-                            <View style={styles.requestBox}>
-                                <Text style={styles.requestsButtonText}>
-                                    Requests
-                                </Text>
-                            </View>
-                        </TouchableOpacity>
                     </View>
                     <View style={styles.subTableRight}>
                         <FlatList
@@ -283,45 +276,54 @@ export default function Index() {
                         />
                     </View>
                 </View>
-                <TouchableOpacity style={styles.addChatButton} onPress={() => setIsModalVisible(true)}>
-                    <Image source={require('../../assets/images/plus.png')} style={styles.avatar} />
-                </TouchableOpacity>
-
-                <Modal
-                    visible={isModalVisible}
-                    animationType="slide"
-                    transparent={true}
-                    onRequestClose={() => setIsModalVisible(false)}
-                >
-                    <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setIsModalVisible(false)}>
-                        <TouchableOpacity activeOpacity={1} style={styles.modalContent}>
-
-                            <Text style={styles.modalTitle}>Create a chat: </Text>
-
-                            <FlatList
-                                data={friends}
-                                keyExtractor={(item) => item.id}
-                                renderItem={({ item }) => (
-                                    <View style={styles.friendRow}>
-                                        <View style={styles.friendInfo}>
-                                            <Image source={require('../../assets/images/avatar.png')} style={styles.avatar} />
-                                            <Text style={styles.username}>{item.username}</Text>
-                                        </View>
-
-                                        <TouchableOpacity style={styles.actionButton} onPress={() => createChat(item)}>
-                                            <Image source={require('../../assets/images/plus.png')} style={styles.smallIcon} />
-                                        </TouchableOpacity>
-                                    </View>
-                                )}
-                            />
-
-                            <TouchableOpacity style={styles.closeButton} onPress={() => setIsModalVisible(false)}>
-                                <Text style={styles.closeButtonText}>Close</Text>
-                            </TouchableOpacity>
-
-                        </TouchableOpacity>
+                <View style={styles.bottomBar}>
+                    <TouchableOpacity onPress={() => goToRequests()} style={styles.requestButtonWrapper}>
+                        <View style={styles.requestBox}>
+                            <Text style={styles.requestsButtonText}>
+                                Requests
+                            </Text>
+                        </View>
                     </TouchableOpacity>
-                </Modal>
+                    <TouchableOpacity style={styles.addChatButton} onPress={() => setIsModalVisible(true)}>
+                        <Image source={require('../../assets/images/plus.png')} style={styles.avatar} />
+                    </TouchableOpacity>
+
+                    <Modal
+                        visible={isModalVisible}
+                        animationType="slide"
+                        transparent={true}
+                        onRequestClose={() => setIsModalVisible(false)}
+                    >
+                        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setIsModalVisible(false)}>
+                            <TouchableOpacity activeOpacity={1} style={styles.modalContent}>
+
+                                <Text style={styles.modalTitle}>Create a chat: </Text>
+
+                                <FlatList
+                                    data={friends}
+                                    keyExtractor={(item) => item.id}
+                                    renderItem={({ item }) => (
+                                        <View style={styles.friendRow}>
+                                            <View style={styles.friendInfo}>
+                                                <Image source={require('../../assets/images/avatar.png')} style={styles.avatar} />
+                                                <Text style={styles.username}>{item.username}</Text>
+                                            </View>
+
+                                            <TouchableOpacity style={styles.actionButton} onPress={() => createChat(item)}>
+                                                <Image source={require('../../assets/images/plus.png')} style={styles.smallIcon} />
+                                            </TouchableOpacity>
+                                        </View>
+                                    )}
+                                />
+
+                                <TouchableOpacity style={styles.closeButton} onPress={() => setIsModalVisible(false)}>
+                                    <Text style={styles.closeButtonText}>Close</Text>
+                                </TouchableOpacity>
+
+                            </TouchableOpacity>
+                        </TouchableOpacity>
+                    </Modal>
+                </View>
             </SafeAreaView>
         </LinearGradient>
     );
