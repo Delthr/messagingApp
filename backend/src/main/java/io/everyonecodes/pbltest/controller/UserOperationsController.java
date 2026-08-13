@@ -68,8 +68,7 @@ public class UserOperationsController {
 
     @GetMapping("/findAUserId")
     public ResponseEntity<?> findUserId(@RequestParam String userName){
-     var user = userService.findUserByUsername(userName);
-     if (user.isEmpty())return ResponseEntity.notFound().build();
-    return ResponseEntity.ok(new UserDto(user.get().getId(), user.get().getUsername(), user.get().getEmail()));
+     var users = userService.findUserBySubString(userName);
+    return ResponseEntity.ok(users);
     }
 }

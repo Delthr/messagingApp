@@ -187,11 +187,10 @@ export default function Index() {
             const response = await api.get('/findAUserId', {
                 params: { userName: searchUsername }
             });
-            const targetedUser: SearchResults = response.data;
-            console.log(response.data);
-            if (targetedUser && targetedUser.id) {
-                setResults([targetedUser]);
-                console.log("User has been found! : ", targetedUser.username);
+            const foundUsers: SearchResults[] = response.data;
+            console.log(" Users that are founded: " + response.data);
+            if (Array.isArray(foundUsers) && foundUsers.length > 0) {
+                setResults(foundUsers);
             } else {
                 setResults([]);
             }

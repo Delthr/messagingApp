@@ -9,11 +9,14 @@ export const styles = StyleSheet.create({
         flex: 1,
     },
     subTableLeft: {
+        height: '100%',
         width: '20%',
+        minWidth: 120,
         paddingHorizontal: 8,
         alignItems: 'stretch',
     },
     subTableRight: {
+        minWidth: 200,
         marginTop: 30,
         flex: 1,
         paddingHorizontal: 12,
@@ -35,6 +38,7 @@ export const styles = StyleSheet.create({
 
     contactText: {
         marginLeft: 5,
+        color: '#fff',
         marginRight: 5,
         fontSize: Math.max(14, width * 0.012),
     },
@@ -43,6 +47,7 @@ export const styles = StyleSheet.create({
 
     sendedByText: {
         marginLeft: 5,
+        color: '#fff',
         marginRight: 5,
         fontSize: Math.max(10, width * 0.009),
     },
@@ -77,6 +82,7 @@ export const styles = StyleSheet.create({
 
     friendBox: {
         width: '100%',
+        borderColor: '#fff',
         backgroundColor: 'transparent',
         borderWidth: 2,
         borderRadius: 25,
@@ -90,18 +96,21 @@ export const styles = StyleSheet.create({
         marginRight: 20,
     },
     friendDataText: {
+        color: "#fff",
         fontSize: Math.max(12, width * 0.01),
     },
     requestBox: {
         width: '100%',
         backgroundColor: 'transparent',
         borderWidth: 2,
+        borderColor: '#fff',
         borderRadius: 35,
         marginBottom: 15,
     },
     requestsButtonText: {
         fontSize: Math.max(15, width * 0.02),
         textAlign: 'center',
+        color: '#fff',
     },
 
     content: {
@@ -118,6 +127,9 @@ export const styles = StyleSheet.create({
     goToContactButton: {},
 
     searchContainer: {
+        borderColor: '#fff',
+        borderRadius: 20,
+        borderWidth: 2,
         position: 'relative',
         zIndex: 1000,
         width: '100%',
@@ -177,7 +189,8 @@ export const styles = StyleSheet.create({
 
     },
     input: {
-
+        marginLeft: 5,
+        marginRight: 5,
     },
     goToChatButton: {
 
