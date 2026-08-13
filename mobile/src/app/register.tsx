@@ -28,11 +28,35 @@ export default function Index() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isUsernameNonValid, setIsUserNameNonValid] = useState<boolean>(false);
+  const [isPasswordNonValid, setIsPasswordNonValid] = useState<boolean>(false);
+  const [isEmailNonValid, setIsEmailNonValid] = useState<boolean>(false);
+
+  const usernameInputStyle = isUsernameNonValid ? styles.loginInputInvalid : styles.loginUsernameInput;
+  const emailInputStyle = isEmailNonValid ? styles.loginInputInvalid : styles.loginEmailInput;
+  const passwordInputStyle = isPasswordNonValid ? styles.loginInputInvalid : styles.loginPasswordInput;
+
+  function containsSpecialChars(str: string): boolean {
+    return str.split('').some(char => {
+      const code = char.charCodeAt(0);
+
+      const isLetter = (code >= 65 && code <= 90) || (code >= 97 && code <= 122);
+      const isDigit = code >= 48 && code <= 57;
+      const isSpace = code === 32;
 
 
-
+      return !isLetter && !isDigit && !isSpace;
+    });
+  }
+  function containsNumbers(str: string): boolean {
+    return str.split('').some(char => {
+      const code = char.charCodeAt(0);
+      return code >= 48 && code <= 57;
+    });
+  }
 
   const handleRegistration = async () => {
+    if (isUsernameNonValid || isEmailNonValid || isPasswordNonValid) return;
     try {
       console.log("Sending register form...");
       const response = await api.post('/register', {
@@ -53,6 +77,50 @@ export default function Index() {
       }
     }
   };
+  function validateUsername(username: string) {
+    setUsername(username);
+
+    if (username.length > 0 && (username.length < 4 || username.length > 50 || containsSpecialChars(username))) {
+      setIsUserNameNonValid(true);
+    } else {
+      setIsUserNameNonValid(false);
+    }
+  }
+
+  function validatePassword(password: string) {
+    setPassword(password);
+
+    if (password.length > 0 && (password.length < 8 || !containsSpecialChars(password) || !containsNumbers(password))) {
+      setIsPasswordNonValid(true);
+    } else {
+      setIsPasswordNonValid(false);
+    }
+  }
+
+  function validateEmail(email: string) {
+    setEmail(email);
+
+    const emailParts = email.split('@');
+
+    if (emailParts.length === 2) {
+      const localPart = emailParts[0];
+      const domainPart = emailParts[1];
+
+      const domainParts = domainPart.split('.');
+
+      if (domainParts.length === 2) {
+        const domainName = domainParts[0];
+        const tld = domainParts[1];
+
+        if (localPart.length >= 1 && domainName.length >= 1 && tld.length >= 2) {
+          setIsEmailNonValid(false);
+          return;
+        }
+      }
+    }
+
+    setIsEmailNonValid(true);
+  }
 
   return (
     <LinearGradient style={stylesBackground.gradientBackground} colors={gradientK} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }}>
@@ -64,24 +132,27 @@ export default function Index() {
           <Text style={[styles.loginText, loginTextTheme]}>Signup</Text>
 
 
-          <TextInput style={[styles.loginInput, loginInputTheme]}
+          <TextInput style={[loginInputTheme, usernameInputStyle]}
             placeholder='Enter your username...'
             placeholderTextColor={isDarkMode ? '#fff' : '#fff'}
             value={username}
-            onChangeText={setUsername}
+            onChangeText={validateUsername}
           />
-          <TextInput style={[styles.loginInput, loginInputTheme]}
+          {isUsernameNonValid && <Text style={styles.invalidUsername}>{"The username must be (4-50) characters long,\n and have no special characters."}</Text>}
+          <TextInput style={[loginInputTheme, emailInputStyle]}
             placeholder='Enter your email...'
             placeholderTextColor={isDarkMode ? '#fff' : '#fff'}
             value={email}
-            onChangeText={setEmail}
+            onChangeText={validateEmail}
           />
-          <TextInput style={[styles.loginInput, loginInputTheme]}
+          {isEmailNonValid && <Text style={styles.invalidEmail}>The email is not valid.</Text>}
+          <TextInput style={[loginInputTheme, passwordInputStyle]}
             secureTextEntry placeholder='Enter your password...'
             placeholderTextColor={isDarkMode ? '#fff' : '#fff'}
             value={password}
-            onChangeText={setPassword}
+            onChangeText={validatePassword}
           />
+          {isPasswordNonValid && <Text style={styles.invalidPassword}>{"The password needs to be at least 8 characters long,\n have at least one number, and one special sign."}</Text>}
 
           <Text style={[styles.registerText, registerTextTheme]}>You have an account? Log in <Text style={[styles.registerText, registerTextTheme]} onPress={() => router.push('/')}>here.</Text></Text>
 
