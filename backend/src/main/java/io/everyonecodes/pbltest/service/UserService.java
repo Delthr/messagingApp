@@ -4,9 +4,6 @@ import io.everyonecodes.pbltest.controller.UserDto;
 import io.everyonecodes.pbltest.model.User;
 import io.everyonecodes.pbltest.repository.UserRepository;
 import lombok.AllArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -43,7 +40,10 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public User validateUser(String username) {
+    public User validateUserByUsername(String username) {
         return userRepository.findUserByUsername(username).orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("User not found!"));
+    }
+    public User validateUserById(UUID id) {
+        return userRepository.findById(id).orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("User not found!"));
     }
 }

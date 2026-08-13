@@ -23,6 +23,7 @@ public class Message {
     @JoinColumn(name = "sender_id")
     private User sender;
 
+    @Column(columnDefinition = "TEXT")
     private String text;
     private LocalDateTime createdAt;
     private String status;

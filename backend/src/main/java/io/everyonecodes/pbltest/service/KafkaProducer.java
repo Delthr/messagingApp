@@ -19,9 +19,7 @@ public class KafkaProducer {
     }
 
     public void sendMessage(ChatMessageDto chatMessageDto, User loggedInUser) {
-        var chat = chatService.findChatById(chatMessageDto.chatId()).orElseThrow(
-                () -> new jakarta.persistence.EntityNotFoundException("Chat not found!")
-        );
+        var chat = chatService.validateChatById(chatMessageDto.chatId());
         boolean isParticipant = chat.getParticipants().stream()
                 .anyMatch(p -> p.getId()
                         .getUserId()

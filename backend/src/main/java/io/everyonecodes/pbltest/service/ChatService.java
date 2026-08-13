@@ -6,16 +6,13 @@ import io.everyonecodes.pbltest.model.*;
 import io.everyonecodes.pbltest.repository.ChatRepository;
 import io.everyonecodes.pbltest.repository.MessageRepository;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class ChatService {
@@ -23,18 +20,16 @@ public class ChatService {
     private final UserService userService;
     private final ChatParticipantService chatParticipantService;
     private final FriendshipService friendshipService;
-    private final MessageRepository messageRepository;
 
-    public ChatService(ChatRepository chatRepository, UserService userService, ChatParticipantService chatParticipantService, FriendshipService friendshipService, MessageRepository messageRepository) {
+    public ChatService(ChatRepository chatRepository, UserService userService, ChatParticipantService chatParticipantService, FriendshipService friendshipService) {
         this.chatRepository = chatRepository;
         this.userService = userService;
         this.chatParticipantService = chatParticipantService;
         this.friendshipService = friendshipService;
-        this.messageRepository = messageRepository;
     }
 
-    public Optional<Chat> findChatById(UUID chatId) {
-        return chatRepository.findById(chatId);
+    public Chat validateChatById(UUID chatId) {
+        return chatRepository.findById(chatId).orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Chat has not been found!"));
     }
 
     @Transactional
@@ -42,11 +37,9 @@ public class ChatService {
         if (usernameA.equals(usernameB)) {
             throw new IllegalArgumentException("You cannot create a chat with yourself!");
         }
-// unlock it
-        User userA = userService.findUserByUsername(usernameA)
-                .orElseThrow(() -> new RuntimeException("User A not found"));
-        User userB = userService.findUserByUsername(usernameB)
-                .orElseThrow(() -> new RuntimeException("User B not found"));
+
+        User userA = userService.validateUserByUsername(usernameA);
+        User userB = userService.validateUserByUsername(usernameB);
 
         Optional<Chat> existingChat = chatRepository.findPrivateChatBetweenUsers(userA.getId(), userB.getId());
         if (existingChat.isPresent()) {
@@ -76,12 +69,8 @@ public class ChatService {
 
     @Transactional
     public void addUserToChat(UUID chatId, String receiverUsername, String senderUsername) {
-        var chat = chatRepository.findById(chatId).orElseThrow(
-                () -> new jakarta.persistence.EntityNotFoundException("Chat not found!")
-        );
-        var senderUser = userService.findUserByUsername(senderUsername).orElseThrow(
-                () -> new jakarta.persistence.EntityNotFoundException("User " + senderUsername + " has not been found!")
-        );
+        var chat = validateChatById(chatId);
+        var senderUser = userService.validateUserByUsername(senderUsername);
         boolean isParticipant = chat.getParticipants().stream()
                 .anyMatch(p -> p.getId()
                         .getUserId()
@@ -89,11 +78,9 @@ public class ChatService {
         if (!isParticipant) {
             throw new jakarta.persistence.EntityNotFoundException("You are not friends with " + receiverUsername + ". Before sending a request, add friend!");
         }
-        var user = userService.findUserByUsername(receiverUsername).orElseThrow(
-                () -> new jakarta.persistence.EntityNotFoundException("User " + receiverUsername + " not found!")
-        );
+        var user = userService.validateUserByUsername(receiverUsername);
         var userDto = new UserDto(user.getId(), user.getUsername(), user.getEmail());
-        if (isParticipant && friendshipService.getFriendsList(senderUser.getId()).contains(userDto)) {
+        if (friendshipService.getFriendsList(senderUser.getId()).contains(userDto)) {
             ChatParticipant newMember = chatParticipantService.createParticipant(user, chat);
             chat.getParticipants().add(newMember);
             chatRepository.save(chat);
@@ -103,9 +90,7 @@ public class ChatService {
 
     @Transactional(readOnly = true)
     public List<ChatDto> getUserChats(String username) {
-        var user = userService.findUserByUsername(username).orElseThrow(
-                () -> new jakarta.persistence.EntityNotFoundException("User " + username + " has not been found!")
-        );
+        var user = userService.validateUserByUsername(username);
         return chatRepository.findAllUserChatsWithLastMessage(user.getId());
     }
 
@@ -131,7 +116,7 @@ public class ChatService {
     @Transactional
     public void deleteUserFromChat(String username, String chatId, String usernameToBeDeleted){
     var chat = getChatWithUserValidation(chatId, username);
-    var userToBeDeleted = userService.validateUser(usernameToBeDeleted);
+    var userToBeDeleted = userService.validateUserByUsername(usernameToBeDeleted);
     var removed = chat.getParticipants()
             .removeIf(chp -> chp.getUser().equals(userToBeDeleted));
     if (!removed){
@@ -140,8 +125,8 @@ public class ChatService {
     }
 
     private Chat getChatWithUserValidation(String chatId, String username) {
-        var user = userService.validateUser(username);
-        var chat = chatRepository.findById(UUID.fromString(chatId)).orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Chat not found!"));
+        var user = userService.validateUserByUsername(username);
+        var chat = validateChatById(UUID.fromString(chatId));
         var isUserPartOfChat = userIsPartOfChat(user, UUID.fromString(chatId));
         if (!isUserPartOfChat) {
             throw new org.springframework.security.access.AccessDeniedException("You don't have permission!");

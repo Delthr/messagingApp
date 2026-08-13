@@ -3,7 +3,6 @@ package io.everyonecodes.pbltest.service;
 import io.everyonecodes.pbltest.controller.FriendshipDto;
 import io.everyonecodes.pbltest.controller.UserDto;
 import io.everyonecodes.pbltest.model.Friendship;
-import io.everyonecodes.pbltest.model.User;
 import io.everyonecodes.pbltest.repository.FriendshipRepository;
 import io.everyonecodes.pbltest.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -16,11 +15,11 @@ import java.util.UUID;
 @Service
 public class FriendshipService {
     private final FriendshipRepository friendshipRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
 
-    public FriendshipService(FriendshipRepository friendshipRepository, UserRepository userRepository) {
+    public FriendshipService(FriendshipRepository friendshipRepository, UserService userService) {
         this.friendshipRepository = friendshipRepository;
-        this.userRepository = userRepository;
+        this.userService = userService;
     }
 
     @Transactional
@@ -33,22 +32,14 @@ public class FriendshipService {
             throw new IllegalStateException("Friendship already exists! Status: " + tempCheck.get().getStatus());
         } else if (tempCheck.isPresent()) {
             var friendship = tempCheck.get();
-            friendship.setInviting(userRepository.findById(senderId).orElseThrow(
-                    () -> new jakarta.persistence.EntityNotFoundException("No such user exists!")
-            ));
-            friendship.setReceiver(userRepository.findById(receiverId).orElseThrow(
-                    () -> new jakarta.persistence.EntityNotFoundException("No such user exists!")
-            ));
+            friendship.setInviting(userService.validateUserById(senderId));
+            friendship.setReceiver(userService.validateUserById(receiverId));
             friendship.setStatus("PENDING");
             friendshipRepository.save(friendship);
         } else {
             Friendship friendship = new Friendship();
-            friendship.setInviting(userRepository.findById(senderId).orElseThrow(
-                    () -> new jakarta.persistence.EntityNotFoundException("No such user exists!")
-            ));
-            friendship.setReceiver(userRepository.findById(receiverId).orElseThrow(
-                    () -> new jakarta.persistence.EntityNotFoundException("No such user exists!")
-            ));
+            friendship.setInviting(userService.validateUserById(senderId));
+            friendship.setReceiver(userService.validateUserById(receiverId));
             friendship.setStatus("PENDING");
             friendshipRepository.save(friendship);
         }

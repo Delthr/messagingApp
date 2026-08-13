@@ -7,7 +7,6 @@ import io.everyonecodes.pbltest.model.Message;
 import io.everyonecodes.pbltest.model.User;
 import io.everyonecodes.pbltest.repository.ChatRepository;
 import io.everyonecodes.pbltest.repository.MessageRepository;
-import io.everyonecodes.pbltest.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -23,15 +22,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MessageService {
     private final MessageRepository messageRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final ChatRepository chatRepository;
     private final KafkaProducer kafkaProducer;
 
 
     public void sendMessage(UUID chatId, String senderName, String text) {
-        var loggedInUser = userRepository.findUserByUsername(senderName).orElseThrow(
-                () -> new RuntimeException("User not found!")
-        );
+        var loggedInUser = userService.validateUserByUsername(senderName);
         var chat = chatRepository.findById(chatId).orElseThrow(
                 () -> new jakarta.persistence.EntityNotFoundException("Chat not found!")
         );
@@ -57,7 +54,7 @@ public class MessageService {
 
     public Slice<ChatMessageDto> getChatHistory(UUID chatId, int page, String loggedInUsername) {
         Chat chat = chatRepository.findById(chatId).orElseThrow(() -> new RuntimeException("Chat not found!"));
-        var loggedInUser = userRepository.findUserByUsername(loggedInUsername).orElseThrow(
+        var loggedInUser = userService.findUserByUsername(loggedInUsername).orElseThrow(
                 () -> new RuntimeException("User not found!")
         );
         boolean isParticipant = chat.getParticipants().stream()
@@ -82,7 +79,7 @@ public class MessageService {
 
     public void saveIncomingMessage(ChatMessageDto chatMessageDto) {
         Chat chat = chatRepository.findById(chatMessageDto.chatId()).orElseThrow(() -> new RuntimeException("Chat not found!"));
-        User sender = userRepository.findById(chatMessageDto.senderId()).orElseThrow(() -> new RuntimeException("User not found!"));
+        User sender = userService.validateUserByUsername(chatMessageDto.senderUsername());
 
         Message message = new Message();
         message.setChat(chat);
@@ -96,9 +93,7 @@ public class MessageService {
 
     @Transactional
     public void deleteMessage(UUID chatId, UUID messageId, String loggedInUsername){
-        var loggedInUser = userRepository.findUserByUsername(loggedInUsername).orElseThrow(
-                ()-> new jakarta.persistence.EntityNotFoundException("User " + loggedInUsername + " not found!")
-        );
+        var loggedInUser = userService.validateUserByUsername(loggedInUsername);
         var message = messageRepository.findById(messageId).orElseThrow(
                 ()-> new jakarta.persistence.EntityNotFoundException("Message not found!")
         );

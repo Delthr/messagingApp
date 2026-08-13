@@ -335,7 +335,6 @@ export default function Index() {
                                 );
                             }}
                         />
-
                         {showEmojiPicker && Platform.OS === 'web' && (
                             <View
                                 style={{ position: 'absolute', bottom: 70, right: 60, zIndex: 1000 }}

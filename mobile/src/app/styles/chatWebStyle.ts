@@ -144,6 +144,73 @@ export const styles = StyleSheet.create({
         width: 20,
         height: 20,
     },
+
+
+
+    messageBubble: {
+        backgroundColor: '#2a1a35',
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        borderRadius: 18,
+        marginVertical: 4,
+        maxWidth: '80%',
+        alignSelf: 'flex-start',
+
+        // Subtelny cień
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 3,
+        elevation: 3,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    messageMenuContent: {
+        width: '75%',
+        backgroundColor: '#1f1124',
+        borderRadius: 20,
+        borderWidth: 1.5,
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: 0.4,
+        shadowRadius: 6,
+    },
+    messageMenuTitle: {
+        color: 'rgba(255, 255, 255, 0.5)',
+        fontSize: 13,
+        fontStyle: 'italic',
+        textAlign: 'center',
+        marginBottom: 10,
+        paddingHorizontal: 5,
+    },
+    menuOption: {
+        paddingVertical: 12,
+        paddingHorizontal: 10,
+        alignItems: 'center',
+        borderRadius: 10,
+    },
+    menuOptionText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    deleteOptionText: {
+        color: '#ff4d4d',
+        fontWeight: '600',
+    },
+    menuDivider: {
+        height: 1,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        marginVertical: 2,
+    },
 });
 
 export default styles;
