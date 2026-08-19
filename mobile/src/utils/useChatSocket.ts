@@ -4,20 +4,20 @@ import { Platform } from "react-native";
 import { getToken } from "./storage";
 
 const getBrokerURL = () => {
-    if (Platform.OS === 'web') {
-        return 'ws://192.168.1.135:9999/ms-native';
-    } else {
-        return 'ws://192.168.1.108:9999/ms-native';
-    }
-}
+    return Platform.OS === 'web'
+        ? 'ws://localhost:9999/ms-native'
+        : 'ws://192.168.1.108:9999/ms-native';
+};
 
 export function useChatSocket(chatId: string) {
     const [messages, setMessages] = useState<any[]>([]);
-    const [isConneected, setIsConnected] = useState(false);
+    const [isConnected, setIsConnected] = useState(false);
     const stompClientRef = useRef<Client | null>(null);
 
     useEffect(() => {
         if (!chatId) return;
+
+        setMessages([]);
 
         let client: Client;
 
@@ -36,25 +36,39 @@ export function useChatSocket(chatId: string) {
                 },
                 reconnectDelay: 5000,
                 onConnect: () => {
-                    console.log("Connected with chat via webSocket!");
+                    console.log(`Connected to chat ${chatId} via WebSocket!`);
                     setIsConnected(true);
 
                     client.subscribe(`/topic/chat/${chatId}`, (message) => {
                         const payload = JSON.parse(message.body);
 
                         if (payload.eventType === 'DELETE') {
-                            setMessages((prev) => prev.filter((m) => m.id !== payload.messageId));
+                            const deletedId = payload.messageId || payload.id;
+                            setMessages((prev) => prev.filter((m) => String(m.id) !== String(deletedId)));
                         } else {
+                            const incomingId = payload.id || payload.messageId;
+
                             setMessages((prev) => {
-                                const exists = prev.some((m) => String(m.id) === String(payload.id));
-                                if (exists) return prev;
-                                return [payload, ...prev];
+                                const current = Array.isArray(prev) ? prev : [];
+
+                                const exists = current.some((m) => {
+                                    const existingId = m.id || m.messageId;
+                                    return String(existingId) === String(incomingId);
+                                });
+
+                                if (exists) return current;
+
+                                const normalizedSocketMessage = {
+                                    ...payload,
+                                    id: incomingId,
+                                };
+
+                                return [normalizedSocketMessage, ...current];
                             });
                         }
                     });
                 },
                 onDisconnect: () => {
-                    console.log('Disconnected!');
                     setIsConnected(false);
                 },
                 onStompError: (frame) => {
@@ -75,5 +89,5 @@ export function useChatSocket(chatId: string) {
         };
     }, [chatId]);
 
-    return { messages, setMessages, isConneected };
+    return { messages, setMessages, isConnected };
 }

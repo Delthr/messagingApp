@@ -38,7 +38,7 @@ public class MessageService {
                 loggedInUser.getId(),
                 loggedInUser.getUsername(),
                 text,
-                LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).toString(),
+                LocalDateTime.now().toString(),
                 "SENT"
         );
         boolean isParticipant = chat.getParticipants().stream()

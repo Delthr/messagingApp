@@ -41,11 +41,6 @@ public class ChatService {
         User userA = userService.validateUserByUsername(usernameA);
         User userB = userService.validateUserByUsername(usernameB);
 
-        Optional<Chat> existingChat = chatRepository.findPrivateChatBetweenUsers(userA.getId(), userB.getId());
-        if (existingChat.isPresent()) {
-            return existingChat.get();
-        }
-
         boolean isFriend = friendshipService.getFriendsList(userA.getId())
                 .stream()
                 .anyMatch(friend -> friend.id().equals(userB.getId()));
@@ -60,6 +55,7 @@ public class ChatService {
         chat.setCreatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
         Chat savedChat = chatRepository.save(chat);
 
+//        #TODO: why have this here ?!
 
         ChatParticipant participantA = chatParticipantService.createParticipant(userA, savedChat);
         ChatParticipant participantB = chatParticipantService.createParticipant(userB, savedChat);

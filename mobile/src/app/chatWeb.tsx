@@ -25,7 +25,7 @@ export default function Index() {
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
 
-    const { messages, setMessages, isConneected } = useChatSocket(chatId);
+    const { messages, setMessages } = useChatSocket(chatId);
     const router = useRouter();
     const colorScheme = useColorScheme();
 
@@ -151,6 +151,7 @@ export default function Index() {
         const fetchHistory = async () => {
             try {
                 setLoadingHistory(true);
+                setMessages([]);
                 setPage(0);
                 const response = await api.get(`/messages/${chatId}/messages?page=0`);
                 const data = response.data;
@@ -199,6 +200,9 @@ export default function Index() {
     };
 
     const hanldeSendMessage = async () => {
+        if (showEmojiPicker) {
+            setShowEmojiPicker(false);
+        }
         if (!inputText.trim() || isSendingRef.current) return;
 
         isSendingRef.current = true;
@@ -206,44 +210,23 @@ export default function Index() {
         setInputText('');
 
         try {
-            const response = await api.post('/messages/send', {
+            await api.post('/messages/send', {
                 chatId: chatId,
                 text: textToSend,
             });
 
-            if (response.data) {
-                const res = response.data;
+            setChats((prevChats) =>
+                prevChats.map((chat) =>
+                    chat.chatId === chatId
+                        ? { ...chat, lastMessage: textToSend }
+                        : chat
+                )
+            );
 
-                const normalizedMessage = {
-                    id: res.id || res.messageId || Date.now().toString(),
-                    chatId: res.chatId || chatId,
-                    text: res.text || res.content || textToSend,
-                    senderId: res.senderId || res.userId || res.authorId || currentUserId,
-                    senderUsername: res.senderUsername || res.username || '',
-                    time: res.time || res.createdAt || res.sendetAt || new Date().toISOString(),
-                    status: res.status || 'SENT'
-                };
 
-                setChats(prevChats =>
-                    prevChats.map(chat =>
-                        chat.chatId === chatId
-                            ? { ...chat, lastMessage: textToSend }
-                            : chat
-                    )
-                );
-
-                setMessages((prevMessages: any[]) => {
-                    const currentList = Array.isArray(prevMessages) ? prevMessages : [];
-                    const alreadyExists = currentList.some(
-                        (msg) => String(msg.id) === String(normalizedMessage.id)
-                    );
-
-                    if (alreadyExists) return currentList;
-                    return [normalizedMessage, ...currentList];
-                });
-            }
         } catch (error) {
             console.log('Error sending message: ', error);
+            setInputText(textToSend);
         } finally {
             isSendingRef.current = false;
 
@@ -276,6 +259,12 @@ export default function Index() {
     const chatName = chats.find(e => e.chatId === chatId)?.chatName ?? '';
 
 
+    const sortedMessages = [...messages].sort((a, b) => {
+        const timeA = new Date(a.time || a.createdAt).getTime();
+        const timeB = new Date(b.time || b.createdAt).getTime();
+        return timeB - timeA;
+    });
+
     return (
         <LinearGradient style={stylesBackground.gradientBackground} colors={gradientK} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }}>
             <SafeAreaView style={stylesBackground.container}>
@@ -300,7 +289,7 @@ export default function Index() {
                         </View>
                         <FlatList
                             inverted
-                            data={Array.isArray(messages) ? messages : []}
+                            data={sortedMessages}
                             keyExtractor={(item, index) => item.id?.toString() ?? index.toString()}
                             onEndReached={fetchMoreMessages}
                             onEndReachedThreshold={0.3}
