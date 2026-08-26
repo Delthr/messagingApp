@@ -37,6 +37,26 @@ A full-stack messaging application built with **Java 21**, **Spring Boot**, **Ap
 * **Stateless REST Security:** Endpoints are protected via Spring Security filter chains using JWT bearer tokens.
 * **Secured WebSockets:** Connection handshakes and STOMP subscriptions validate JWT tokens directly from authorization headers before establishing a live session.
 
+### 4. Security & End-to-End Encryption (E2EE)
+
+This application incorporates full **End-to-End Encryption (E2EE)** to ensure user privacy.
+Message contents are encrypted locally on the sender's device and can only be decrypted by the intended recipients.
+The server stores only encrypted payloads and has zero knowledge of private keys or plaintext content.
+
+#### How It Works
+
+1. **Key Generation & Local Storage:**
+   - Upon initialization, unique cryptographic key pairs (public and private keys) are generated.
+   - The private key is stored securely on the local device SecureStore / LocalStorage and never leaves the client.
+
+2. **Message Encryption & Key Exchange:**
+   - Chat messages are encrypted using a unique symmetric chat session key and an Initialization Vector.
+   - The symmetric chat key is independently encrypted for each participant using **ECDH** (Elliptic-curve Diffie-Hellman) key exchange.
+
+3. **Client-side Decryption:**
+   - When fetching chats, the client tests packets in  using its local private key.
+   - Once the matching chat key is decrypted, the application decrypts messages on-the-fly before rendering it in the UI.
+
 ## Screenshots from the application
 ![loginScreen](readmeAssets/loginForm.png)
 ![registerScreen](readmeAssets/registerForm.png)
