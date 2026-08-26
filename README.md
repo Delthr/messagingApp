@@ -44,9 +44,9 @@ Dadurch werden unnötige `COUNT(*)`-Abfragen bei jedem Scrollen vermieden, was d
 
 * **Sichere WebSockets:** Verbindungsaufbau und STOMP-Subscriptions validieren JWT-Token direkt aus den Autorisierungsheadern, bevor eine aktive Sitzung hergestellt wird.
 
-## Screenshots from the application
-![loginScreen](readmeassets/loginForm.png)
-![registerScreen](readmeassets/registerForm.png)
-![registerScreenWithNonValidValues](readmeassets/invalidEntriesInRegisterForm.png)
-![mainPageWithContactsAndChats](readmeassets/mainPage.png)
-![chatPageWithChatList](readmeassets/chat.png)
+## Screenshots aus der Anwendung
+![loginScreen](readmeAssets/loginForm.png)
+![registerScreen](readmeAssets/registerForm.png)
+![registerScreenWithNonValidValues](readmeAssets/invalidEntriesInRegisterForm.png)
+![mainPageWithContactsAndChats](readmeAssets/mainPage.png)
+![chatPageWithChatList](readmeAssets/chat.png)
