@@ -1,10 +1,14 @@
 package io.everyonecodes.pbltest.service;
 
-import io.everyonecodes.pbltest.controller.ChatMessageDto;
-import io.everyonecodes.pbltest.controller.MessageEventDto;
-import io.everyonecodes.pbltest.model.Chat;
-import io.everyonecodes.pbltest.model.Message;
-import io.everyonecodes.pbltest.model.User;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.everyonecodes.pbltest.dto.ChatMessageDto;
+import io.everyonecodes.pbltest.dto.MessageEventDto;
+import io.everyonecodes.pbltest.entities.Chat;
+import io.everyonecodes.pbltest.entities.Message;
+import io.everyonecodes.pbltest.entities.User;
+import io.everyonecodes.pbltest.kafka.KafkaProducer;
 import io.everyonecodes.pbltest.repository.ChatRepository;
 import io.everyonecodes.pbltest.repository.MessageRepository;
 import jakarta.transaction.Transactional;
@@ -15,7 +19,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -25,9 +29,11 @@ public class MessageService {
     private final UserService userService;
     private final ChatRepository chatRepository;
     private final KafkaProducer kafkaProducer;
+    private final ObjectMapper objectMapper;
 
 
-    public void sendMessage(UUID chatId, String senderName, String text) {
+    public void sendMessage(UUID chatId, String senderName, String text, String iv, Map<UUID, String> encryptedKeys) {
+
         var loggedInUser = userService.validateUserByUsername(senderName);
         var chat = chatRepository.findById(chatId).orElseThrow(
                 () -> new jakarta.persistence.EntityNotFoundException("Chat not found!")
@@ -38,6 +44,8 @@ public class MessageService {
                 loggedInUser.getId(),
                 loggedInUser.getUsername(),
                 text,
+                iv,
+                encryptedKeys,
                 LocalDateTime.now().toString(),
                 "SENT"
         );
@@ -72,20 +80,30 @@ public class MessageService {
                 e.getSender().getId(),
                 e.getSender().getUsername(),
                 e.getText(),
+                e.getIv(),
+                parseEncryptedKeys(e.getEncryptedKeys()),
                 e.getCreatedAt().toString(),
                 e.getStatus()
         ));
     }
 
     public void saveIncomingMessage(ChatMessageDto chatMessageDto) {
+        if (messageRepository.existsById(chatMessageDto.id()))return;
         Chat chat = chatRepository.findById(chatMessageDto.chatId()).orElseThrow(() -> new RuntimeException("Chat not found!"));
         User sender = userService.validateUserByUsername(chatMessageDto.senderUsername());
 
         Message message = new Message();
+        message.setId(chatMessageDto.id());
         message.setChat(chat);
         message.setSender(sender);
         message.setCreatedAt(LocalDateTime.parse(chatMessageDto.time()));
         message.setText(chatMessageDto.text());
+        message.setIv(chatMessageDto.iv());
+        try {
+            message.setEncryptedKeys(objectMapper.writeValueAsString(chatMessageDto.encryptedKeys()));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error during parsing keymap to string.");
+        }
         message.setStatus("Delivered");
 
         messageRepository.save(message);
@@ -110,5 +128,15 @@ public class MessageService {
         }
         MessageEventDto messageEventDto = new MessageEventDto(chatId, messageId, loggedInUsername);
         kafkaProducer.sendDeleteEvent(messageEventDto);
+    }
+    private Map<UUID, String> parseEncryptedKeys(String json) {
+        if (json == null || json.isBlank()) {
+            return Map.of();
+        }
+        try {
+            return objectMapper.readValue(json, new TypeReference<Map<UUID, String>>() {});
+        } catch (Exception e) {
+            return Map.of();
+        }
     }
 }

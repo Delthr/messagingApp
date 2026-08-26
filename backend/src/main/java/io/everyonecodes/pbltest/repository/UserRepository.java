@@ -1,6 +1,6 @@
 package io.everyonecodes.pbltest.repository;
 
-import io.everyonecodes.pbltest.model.User;
+import io.everyonecodes.pbltest.entities.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

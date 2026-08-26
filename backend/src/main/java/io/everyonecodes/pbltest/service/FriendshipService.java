@@ -1,10 +1,9 @@
 package io.everyonecodes.pbltest.service;
 
-import io.everyonecodes.pbltest.controller.FriendshipDto;
-import io.everyonecodes.pbltest.controller.UserDto;
-import io.everyonecodes.pbltest.model.Friendship;
+import io.everyonecodes.pbltest.dto.FriendshipDto;
+import io.everyonecodes.pbltest.dto.UserDto;
+import io.everyonecodes.pbltest.entities.Friendship;
 import io.everyonecodes.pbltest.repository.FriendshipRepository;
-import io.everyonecodes.pbltest.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 

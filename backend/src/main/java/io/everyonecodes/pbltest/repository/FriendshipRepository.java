@@ -1,6 +1,6 @@
 package io.everyonecodes.pbltest.repository;
 
-import io.everyonecodes.pbltest.model.Friendship;
+import io.everyonecodes.pbltest.entities.Friendship;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
