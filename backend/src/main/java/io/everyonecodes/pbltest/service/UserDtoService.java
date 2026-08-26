@@ -1,7 +1,7 @@
 package io.everyonecodes.pbltest.service;
 
-import io.everyonecodes.pbltest.controller.UserDto;
-import io.everyonecodes.pbltest.model.User;
+import io.everyonecodes.pbltest.dto.UserDto;
+import io.everyonecodes.pbltest.entities.User;
 import org.springframework.stereotype.Service;
 
 @Service

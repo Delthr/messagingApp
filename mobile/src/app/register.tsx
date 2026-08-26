@@ -1,14 +1,22 @@
+import OkModal from '@/utils/okResponse';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from "react";
 import { SafeAreaView, Text, TextInput, TouchableOpacity, useColorScheme, View } from "react-native";
 import api from "../utils/axioss";
+import ErrorModal from "../utils/errors";
 import stylesBackground from './styles/baseStyle';
 import styles from './styles/formStyle';
 
 export default function Index() {
   const router = useRouter();
   const colorScheme = useColorScheme();
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const [isOkModalVisable, setIsOkModalVisable] = useState(false);
+  const [okMessage, setOkMessage] = useState('');
+
 
   const [isDarkMode, setIsDarkMode] = useState(colorScheme === 'dark');
 
@@ -35,6 +43,11 @@ export default function Index() {
   const usernameInputStyle = isUsernameNonValid ? styles.loginInputInvalid : styles.loginUsernameInput;
   const emailInputStyle = isEmailNonValid ? styles.loginInputInvalid : styles.loginEmailInput;
   const passwordInputStyle = isPasswordNonValid ? styles.loginInputInvalid : styles.loginPasswordInput;
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  function goToActivation() {
+    router.replace({ pathname: '/confirmAccount', params: { username: username } });
+  }
 
   function containsSpecialChars(str: string): boolean {
     return str.split('').some(char => {
@@ -64,16 +77,22 @@ export default function Index() {
         email: email,
         password: password
       });
-      console.log("Server response: ", response.data);
-      alert("Account has been created!");
+      setOkMessage("Account has been created!");
+      setIsOkModalVisable(true);
+      await sleep(8500);
+      goToActivation();
+
     } catch (error: any) {
       if (error.response) {
-        console.log(error.response.status);
-        console.log(error.response.data);
+        const data = error.response?.data?.message || "Ups... something went wrong!";
+        setErrorMessage(data);
+        setIsModalVisible(true);
       } else if (error.request) {
-        alert("Cannot connect with server.");
+        setErrorMessage("Cannot connect with server.");
+        setIsModalVisible(true);
       } else {
-        console.log("Ups... Something went wrong! ", error.message);
+        setErrorMessage("Ups... Something went wrong! ");
+        setIsModalVisible(true);
       }
     }
   };
@@ -126,6 +145,16 @@ export default function Index() {
     <LinearGradient style={stylesBackground.gradientBackground} colors={gradientK} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }}>
       <SafeAreaView style={stylesBackground.container}>
         <Stack.Screen options={{ headerShown: false }} />
+        <OkModal
+          visible={isOkModalVisable}
+          okMessage={okMessage}
+          onClose={() => setIsOkModalVisable(false)}
+        />
+        <ErrorModal
+          visible={isModalVisible}
+          errorMessage={errorMessage}
+          onClose={() => setIsModalVisible(false)}
+        />
         <View style={[styles.formBox, formBoxTheme]}>
 
 

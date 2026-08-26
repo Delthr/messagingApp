@@ -1,14 +1,19 @@
+import { ensureUserHasKeys } from '@/utils/cryptoService';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from "react";
 import { SafeAreaView, Text, TextInput, TouchableOpacity, useColorScheme, View } from "react-native";
 import api from '../utils/axioss';
+import ErrorModal from "../utils/errors";
 import { saveToken, saveUserId } from '../utils/storage';
 import stylesBackground from './styles/baseStyle';
 import styles from './styles/formStyle';
 
 export default function LoginScreen() {
   const router = useRouter();
+
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const colorScheme = useColorScheme();
 
@@ -25,7 +30,7 @@ export default function LoginScreen() {
   const loginButtonTheme = isDarkMode ? styles.darkLoginButton : styles.lightLoginButton;
   const registerTextTheme = isDarkMode ? styles.darkRegisterText : styles.lightRegisterText;
 
-  // login in with server
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
@@ -38,23 +43,23 @@ export default function LoginScreen() {
       });
       const authResponseDto = response.data;
       await saveUserId(authResponseDto.id.toString());
-      console.log("Server response: ", response.data);
       const token = response.data.token;
       if (token) {
         await saveToken(token);
         router.replace('/mainPanel');
-      } else {
-        console.log('No token in response!');
       }
+      await ensureUserHasKeys();
     } catch (error: any) {
       if (error.response) {
-        console.log(error.response.status);
-        console.log(error.response.data);
-        alert("To be implemented!");
+        setIsModalVisible(true);
+        const data = error.response?.data?.message || "Ups... something went wrong!";
+        setErrorMessage(data);
       } else if (error.request) {
-        alert("Cannot connect with server.");
+        setIsModalVisible(true);
+        setErrorMessage("Cannot connect with server.");
       } else {
-        console.log("Ups... Something went wrong! ", error.message);
+        setIsModalVisible(true);
+        setErrorMessage("Ups... Something went wrong! ");
       }
     }
   }
@@ -62,6 +67,11 @@ export default function LoginScreen() {
     <LinearGradient style={stylesBackground.gradientBackground} colors={gradientK} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }}>
       <SafeAreaView style={[stylesBackground.container]}>
         <Stack.Screen options={{ headerShown: false }} />
+        <ErrorModal
+          visible={isModalVisible}
+          errorMessage={errorMessage}
+          onClose={() => setIsModalVisible(false)}
+        />
         <View style={[styles.formBox, formBoxTheme]}>
 
           <Text style={[styles.loginText, loginTextTheme]}>Login</Text>

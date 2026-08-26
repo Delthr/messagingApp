@@ -1,6 +1,6 @@
 package io.everyonecodes.pbltest.service;
 
-import io.everyonecodes.pbltest.model.CustomUserDetails;
+import io.everyonecodes.pbltest.config.security.CustomUserDetails;
 import io.everyonecodes.pbltest.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.core.userdetails.UserDetails;

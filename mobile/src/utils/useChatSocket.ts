@@ -1,6 +1,7 @@
 import { Client } from '@stomp/stompjs';
 import { useEffect, useRef, useState } from "react";
 import { Platform } from "react-native";
+import { decryptIncomingMessage } from './cryptoService';
 import { getToken } from "./storage";
 
 const getBrokerURL = () => {
@@ -9,10 +10,18 @@ const getBrokerURL = () => {
         : 'ws://192.168.1.108:9999/ms-native';
 };
 
-export function useChatSocket(chatId: string) {
+export function useChatSocket(chatId: string, currentUserId?: string | null, myPrivateKey?: string | null) {
     const [messages, setMessages] = useState<any[]>([]);
     const [isConnected, setIsConnected] = useState(false);
     const stompClientRef = useRef<Client | null>(null);
+
+    const userIdRef = useRef(currentUserId);
+    const privateKeyRef = useRef(myPrivateKey);
+
+    useEffect(() => {
+        userIdRef.current = currentUserId;
+        privateKeyRef.current = myPrivateKey;
+    }, [currentUserId, myPrivateKey]);
 
     useEffect(() => {
         if (!chatId) return;
@@ -39,7 +48,7 @@ export function useChatSocket(chatId: string) {
                     console.log(`Connected to chat ${chatId} via WebSocket!`);
                     setIsConnected(true);
 
-                    client.subscribe(`/topic/chat/${chatId}`, (message) => {
+                    client.subscribe(`/topic/chat/${chatId}`, async (message) => {
                         const payload = JSON.parse(message.body);
 
                         if (payload.eventType === 'DELETE') {
@@ -47,6 +56,21 @@ export function useChatSocket(chatId: string) {
                             setMessages((prev) => prev.filter((m) => String(m.id) !== String(deletedId)));
                         } else {
                             const incomingId = payload.id || payload.messageId;
+                            let processedPayLoad = payload;
+                            const activeUserId = userIdRef.current;
+                            const activePrivKey = privateKeyRef.current;
+
+                            if (payload.encryptedKeys && payload.iv && activeUserId && activePrivKey) {
+                                const decryptedText = await decryptIncomingMessage(
+                                    payload,
+                                    activeUserId,
+                                    activePrivKey,
+                                );
+                                processedPayLoad = {
+                                    ...payload,
+                                    text: decryptedText
+                                };
+                            }
 
                             setMessages((prev) => {
                                 const current = Array.isArray(prev) ? prev : [];
@@ -59,7 +83,7 @@ export function useChatSocket(chatId: string) {
                                 if (exists) return current;
 
                                 const normalizedSocketMessage = {
-                                    ...payload,
+                                    ...processedPayLoad,
                                     id: incomingId,
                                 };
 

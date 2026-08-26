@@ -18,6 +18,7 @@ export const styles = StyleSheet.create({
     darkTheme: {
         color: '#fff'
     },
+
 });
 
 export default styles;

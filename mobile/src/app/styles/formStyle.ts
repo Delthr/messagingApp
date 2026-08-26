@@ -175,5 +175,62 @@ export const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderRadius: 100,
   },
+
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  modalContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 24,
+    width: '100%',
+    maxWidth: 340,
+    alignItems: 'center',
+    // Cień dla Androida
+    elevation: 5,
+    // Cień dla iOS
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  icon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#d32f2f',
+  },
+  message: {
+    fontSize: 14,
+    color: '#333333',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  button: {
+    backgroundColor: '#d32f2f',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 6,
+    width: '100%',
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
 });
 export default styles;

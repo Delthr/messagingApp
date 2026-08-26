@@ -1,7 +1,7 @@
 package io.everyonecodes.pbltest.controller;
 
-import io.everyonecodes.pbltest.model.CustomUserDetails;
-import io.everyonecodes.pbltest.model.User;
+import io.everyonecodes.pbltest.config.security.CustomUserDetails;
+import io.everyonecodes.pbltest.dto.UserDto;
 import io.everyonecodes.pbltest.service.FriendshipService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

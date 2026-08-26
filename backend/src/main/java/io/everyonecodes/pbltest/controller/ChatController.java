@@ -1,10 +1,8 @@
 package io.everyonecodes.pbltest.controller;
 
-import io.everyonecodes.pbltest.model.Chat;
-import io.everyonecodes.pbltest.repository.UserRepository;
+import io.everyonecodes.pbltest.dto.*;
+import io.everyonecodes.pbltest.entities.Chat;
 import io.everyonecodes.pbltest.service.ChatService;
-import lombok.Getter;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -77,5 +75,12 @@ public class ChatController {
     public ResponseEntity<String> deleteUserFromAChat(@PathVariable String chatId, @PathVariable String usernameToBeDeleted, Authentication authentication){
     chatService.deleteUserFromChat(authentication.getName(), chatId, usernameToBeDeleted);
     return ResponseEntity.ok("User has been deleted!");
+    }
+
+    @GetMapping("/{chatId}/participants")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<ChatUserDto>> getAllChatParticipants(@PathVariable String chatId, Authentication authentication){
+        var participants = chatService.getChatParticipants(chatId, authentication.getName());
+        return ResponseEntity.ok(participants);
     }
 }

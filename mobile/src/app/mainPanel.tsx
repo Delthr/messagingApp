@@ -3,6 +3,7 @@ import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from "react";
 import { FlatList, Image, Modal, Platform, SafeAreaView, Text, TextInput, TouchableOpacity, useColorScheme, View } from "react-native";
 import api from '../utils/axioss';
+import { decryptMessage, decryptParticipantKey, ensureUserHasKeys, getPrivateKeyLocaly } from '../utils/cryptoService';
 import stylesBackground from './styles/baseStyle';
 import styles from './styles/mainPanelStyles';
 
@@ -59,30 +60,73 @@ export default function Index() {
         chatName: string;
         lastMessage: string;
         status: string;
-    };
-    async function gateChatsWithLastMessageAndStatus(): Promise<Chat[] | null> {
-        try {
-            console.log("Requesting data");
-            const response = await api.get('/chat/allChats');
-            console.log(response.data);
-            console.log("Data recived sucessfully!");
-            return response.data;
-        } catch (error: any) {
-            if (error.response) {
-                console.log(error.response.status);
-                console.log(error.response.data);
-                alert("Some error hadnling.");
-                return null;
-            } else if (error.request) {
-                alert("Cannot connect with server.");
-                return null;
-            } else {
-                console.log("Ups... Something went wrong! ", error.message);
-                return null;
-            }
-        }
+        lastMessageIv?: string;
+        encryptedKeys?: Record<string, string>;
     };
 
+    async function gateChatsWithLastMessageAndStatus(): Promise<Chat[] | null> {
+        try {
+            await ensureUserHasKeys();
+
+            const response = await api.get('/chat/allChats');
+            const privKey = await getPrivateKeyLocaly();
+
+            if (!privKey) {
+                console.warn("No local key in storage!");
+                return response.data;
+            }
+
+            if (!Array.isArray(response.data)) return response.data;
+
+            return await Promise.all(
+                response.data.map(async (chat: any) => {
+                    if (!chat.lastMessage || !chat.lastMessageIv || !chat.encryptedKeys) {
+                        return chat;
+                    }
+
+                    try {
+                        const keysMap: Record<string, string> = typeof chat.encryptedKeys === 'string'
+                            ? JSON.parse(chat.encryptedKeys)
+                            : chat.encryptedKeys;
+
+                        let messageKeyHex: string | null = null;
+
+                        for (const [userId, packet] of Object.entries(keysMap)) {
+                            if (typeof packet === 'string' && packet.includes(':')) {
+                                try {
+                                    const decryptedKey = await decryptParticipantKey(packet, privKey);
+                                    if (decryptedKey) {
+                                        messageKeyHex = decryptedKey;
+                                        break;
+                                    }
+                                } catch (packetError) {
+                                    continue;
+                                }
+                            }
+                        }
+
+                        if (!messageKeyHex) {
+                            console.warn(`Cannot find local key for chat: ${chat.chatName || chat.chatId}`);
+                            return chat;
+                        }
+
+                        const decryptedText = await decryptMessage(chat.lastMessage, chat.lastMessageIv, messageKeyHex);
+
+                        return {
+                            ...chat,
+                            lastMessage: decryptedText || chat.lastMessage
+                        };
+                    } catch (e) {
+                        console.error(`Error during decryption in chat:  ${chat.chatName || chat.chatId}:`, e);
+                        return chat;
+                    }
+                })
+            );
+        } catch (error: any) {
+            console.error("Error durging chat  downloading: ", error);
+            return null;
+        }
+    }
     const [chats, setChats] = useState<Chat[]>([]);
     useEffect(() => {
         async function fetchChatsWithLastMessages() {

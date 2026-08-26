@@ -1,8 +1,15 @@
 package io.everyonecodes.pbltest.service;
 
-import io.everyonecodes.pbltest.controller.ChatDto;
-import io.everyonecodes.pbltest.controller.UserDto;
-import io.everyonecodes.pbltest.model.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.everyonecodes.pbltest.dto.ChatDto;
+import io.everyonecodes.pbltest.dto.ChatUserDto;
+import io.everyonecodes.pbltest.dto.UserDto;
+import io.everyonecodes.pbltest.entities.Chat;
+import io.everyonecodes.pbltest.entities.ChatParticipant;
+import io.everyonecodes.pbltest.entities.Message;
+import io.everyonecodes.pbltest.entities.User;
+import io.everyonecodes.pbltest.repository.ChatParticipantRepository;
 import io.everyonecodes.pbltest.repository.ChatRepository;
 import io.everyonecodes.pbltest.repository.MessageRepository;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,9 +17,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ChatService {
@@ -20,12 +29,18 @@ public class ChatService {
     private final UserService userService;
     private final ChatParticipantService chatParticipantService;
     private final FriendshipService friendshipService;
+    private final ChatParticipantRepository chatParticipantRepository;
+    private final MessageRepository messageRepository; // <-- DODANE
+    private final ObjectMapper objectMapper;
 
-    public ChatService(ChatRepository chatRepository, UserService userService, ChatParticipantService chatParticipantService, FriendshipService friendshipService) {
+    public ChatService(ChatRepository chatRepository, UserService userService, ChatParticipantService chatParticipantService, FriendshipService friendshipService, ChatParticipantRepository chatParticipantRepository, MessageRepository messageRepository, ObjectMapper objectMapper) {
         this.chatRepository = chatRepository;
         this.userService = userService;
         this.chatParticipantService = chatParticipantService;
         this.friendshipService = friendshipService;
+        this.chatParticipantRepository = chatParticipantRepository;
+        this.messageRepository = messageRepository;
+        this.objectMapper = objectMapper;
     }
 
     public Chat validateChatById(UUID chatId) {
@@ -55,7 +70,6 @@ public class ChatService {
         chat.setCreatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
         Chat savedChat = chatRepository.save(chat);
 
-//        #TODO: why have this here ?!
 
         ChatParticipant participantA = chatParticipantService.createParticipant(userA, savedChat);
         ChatParticipant participantB = chatParticipantService.createParticipant(userB, savedChat);
@@ -89,7 +103,7 @@ public class ChatService {
         var user = userService.validateUserByUsername(username);
         return chatRepository.findAllUserChatsWithLastMessage(user.getId());
     }
-
+    
     @Transactional
     public void changeChatName(String newChatName, String chatId, String username) {
         var chat = getChatWithUserValidation(chatId, username);
@@ -118,6 +132,22 @@ public class ChatService {
     if (!removed){
         throw new jakarta.persistence.EntityNotFoundException("User is not in chat!");
     }
+    }
+
+    @Transactional(readOnly = true)
+    public List<ChatUserDto> getChatParticipants(String chatId, String username){
+        var user = userService.validateUserByUsername(username);
+        var chat = validateChatById(UUID.fromString(chatId));
+        var isUserPartOfChat = chat.getParticipants().stream()
+                .anyMatch(chp -> chp.getUser().getId().equals(user.getId()));
+        if (!isUserPartOfChat){
+            throw new org.springframework.security.access.AccessDeniedException("You don't have access to that chat!");
+        }
+
+            return chat.getParticipants().stream()
+                    .map(ChatParticipant::getUser)
+                    .map(u -> new ChatUserDto(u.getId().toString(), u.getUsername(), u.getPublicKey()))
+                    .toList();
     }
 
     private Chat getChatWithUserValidation(String chatId, String username) {

@@ -7,7 +7,9 @@ import stylesBackground from './styles/baseStyle';
 import styles from './styles/chatWebStyle';
 // @ts-ignore
 import { useChatSocket } from '@/utils/useChatSocket';
+import { x25519 } from '@noble/curves/ed25519.js';
 import api from '../utils/axioss';
+import { decryptIncomingMessage, decryptMessage, decryptParticipantKey, encryptMessgae, encryptParticipantKey, ensureUserHasKeys, getPrivateKeyLocaly } from '../utils/cryptoService';
 
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 
@@ -24,16 +26,64 @@ export default function Index() {
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
+    const [participants, setParticipants] = useState<Participant[]>([]);
+    const [myPrivateKey, setMyPrivateKey] = useState<string | null>(null);
 
-    const { messages, setMessages } = useChatSocket(chatId);
+    const { messages, setMessages } = useChatSocket(chatId, currentUserId, myPrivateKey);
     const router = useRouter();
     const colorScheme = useColorScheme();
 
     const [isDarkMode, setIsDarkMode] = useState(colorScheme === 'dark');
 
-    const lightGradient = ['rgb(180, 234, 251)', 'rgb(248, 208, 190)'] as const;
+    const lightGradient = ['rgb(89, 94, 96)', 'rgb(248, 208, 190)'] as const;
     const darkGradient = ['rgb(12, 2, 55)', 'rgb(54, 17, 43)'] as const;
     const gradientK = isDarkMode ? darkGradient : lightGradient;
+
+    const bytesToHex = (bytes: Uint8Array): string =>
+        Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+    const hexToBytes = (hex: string): Uint8Array => {
+        const bytes = new Uint8Array(hex.length / 2);
+        for (let i = 0; i < hex.length; i += 2) {
+            bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+        }
+        return bytes;
+    };
+
+    useEffect(() => {
+        const initAuthData = async () => {
+            try {
+                const [userId, privKey] = await Promise.all([
+                    getUserId(),
+                    getPrivateKeyLocaly(),
+                ]);
+                setCurrentUserId(userId);
+                setMyPrivateKey(privKey);
+            } catch (error) {
+                console.error("Error during loading identity: ", error);
+            }
+        };
+        initAuthData();
+    }, []);
+
+    interface Participant {
+        id: string;
+        username: string;
+        publicKey: string;
+    }
+
+    useEffect(() => {
+        const loadParticipants = async () => {
+            try {
+                const response = await api.get(`/chat/${chatId}/participants`);
+                setParticipants(response.data);
+            } catch (error) {
+                console.error('Error during getting participants', error);
+            }
+        };
+        if (chatId) {
+            loadParticipants();
+        }
+    }, [chatId]);
 
     type Chat = {
         chatId: string;
@@ -65,14 +115,68 @@ export default function Index() {
 
     async function gateChatsWithLastMessageAndStatus(): Promise<Chat[] | null> {
         try {
+            await ensureUserHasKeys();
+
             const response = await api.get('/chat/allChats');
-            console.log(response.data);
-            return response.data;
+            const privKey = await getPrivateKeyLocaly();
+
+            if (!privKey) {
+                console.warn("No private key.");
+                return response.data;
+            }
+
+            if (!Array.isArray(response.data)) return response.data;
+
+            return await Promise.all(
+                response.data.map(async (chat: any) => {
+                    if (!chat.lastMessage || !chat.lastMessageIv || !chat.encryptedKeys) {
+                        return chat;
+                    }
+
+                    try {
+                        const keysMap: Record<string, string> = typeof chat.encryptedKeys === 'string'
+                            ? JSON.parse(chat.encryptedKeys)
+                            : chat.encryptedKeys;
+
+                        let messageKeyHex: string | null = null;
+
+
+                        for (const [userId, packet] of Object.entries(keysMap)) {
+                            if (typeof packet === 'string' && packet.includes(':')) {
+                                try {
+                                    const decryptedKey = await decryptParticipantKey(packet, privKey);
+                                    if (decryptedKey) {
+                                        messageKeyHex = decryptedKey;
+                                        break;
+                                    }
+                                } catch (packetError) {
+                                    continue;
+                                }
+                            }
+                        }
+
+                        if (!messageKeyHex) {
+                            console.warn(`No key found for chat: ${chat.chatName || chat.chatId}`);
+                            return chat;
+                        }
+
+                        const decryptedText = await decryptMessage(chat.lastMessage, chat.lastMessageIv, messageKeyHex);
+
+                        return {
+                            ...chat,
+                            lastMessage: decryptedText || chat.lastMessage
+                        };
+                    } catch (e) {
+                        console.error(`Error in decryption in chat:  ${chat.chatName || chat.chatId}:`, e);
+                        return chat;
+                    }
+                })
+            );
         } catch (error: any) {
-            console.log("Error fetching chats: ", error);
+            console.error("Error during downloading chats:  ", error);
             return null;
         }
-    };
+    }
 
     const [chats, setChats] = useState<Chat[]>([]);
     useEffect(() => {
@@ -137,16 +241,21 @@ export default function Index() {
         </TouchableOpacity>
     );
 
-    useEffect(() => {
-        const fetchUserId = async () => {
-            const userId = await getUserId();
-            setCurrentUserId(userId);
-        };
-        fetchUserId();
-    }, []);
+
+    const decryptMessageList = async (rawMessages: any[]) => {
+        if (!currentUserId || !myPrivateKey) return rawMessages;
+
+        return await Promise.all(rawMessages.map(async (msg) => {
+            if (msg.text && msg.iv && msg.encryptedKeys) {
+                const decryptedText = await decryptIncomingMessage(msg, currentUserId, myPrivateKey);
+                return { ...msg, text: decryptedText };
+            }
+            return msg;
+        }))
+    };
 
     useEffect(() => {
-        if (!chatId) return;
+        if (!chatId || !currentUserId || !myPrivateKey) return;
 
         const fetchHistory = async () => {
             try {
@@ -157,7 +266,9 @@ export default function Index() {
                 const data = response.data;
                 const content = data?.content || [];
 
-                setMessages(content);
+                const decryptedContent = await decryptMessageList(content);
+
+                setMessages(decryptedContent);
                 setHasMore(!data?.last);
             } catch (error) {
                 console.log('Error fetching history:', error);
@@ -168,7 +279,7 @@ export default function Index() {
         };
 
         fetchHistory();
-    }, [chatId]);
+    }, [chatId, currentUserId, myPrivateKey]);
 
 
     const fetchMoreMessages = async () => {
@@ -182,9 +293,10 @@ export default function Index() {
             const newContent = data?.content || [];
 
             if (newContent.length > 0) {
+                const decryptedNew = await decryptMessageList(newContent);
                 setMessages((prevMessages) => {
                     const currentList = Array.isArray(prevMessages) ? prevMessages : [];
-                    const filteredNew = newContent.filter(
+                    const filteredNew = decryptedNew.filter(
                         (newMsg: any) => !currentList.some((m) => String(m.id) === String(newMsg.id))
                     );
                     return [...currentList, ...filteredNew];
@@ -199,10 +311,36 @@ export default function Index() {
         }
     };
 
+
+    useEffect(() => {
+        if (!currentUserId || !myPrivateKey || messages.length === 0) return;
+
+        const decryptExistingMessages = async () => {
+            let hasChanges = false;
+            const updated = await Promise.all(
+                messages.map(async (msg) => {
+                    if (msg.text && msg.iv && msg.encryptedKeys) {
+                        const decryptedText = await decryptIncomingMessage(msg, currentUserId, myPrivateKey);
+                        if (decryptedText !== msg.text) {
+                            hasChanges = true;
+                            return { ...msg, text: decryptedText };
+                        }
+                    }
+                    return msg;
+                })
+            );
+
+            if (hasChanges) {
+                setMessages(updated);
+            }
+        };
+
+        decryptExistingMessages();
+    }, [currentUserId, myPrivateKey]);
+
+
     const hanldeSendMessage = async () => {
-        if (showEmojiPicker) {
-            setShowEmojiPicker(false);
-        }
+        if (showEmojiPicker) setShowEmojiPicker(false);
         if (!inputText.trim() || isSendingRef.current) return;
 
         isSendingRef.current = true;
@@ -210,29 +348,54 @@ export default function Index() {
         setInputText('');
 
         try {
+            const randomBytes = crypto.getRandomValues(new Uint8Array(32));
+            const messageKeyHex = bytesToHex(randomBytes);
+            const { encryptedText, iv } = await encryptMessgae(textToSend, messageKeyHex);
+
+
+            const response = await api.get(`/chat/${chatId}/participants`);
+            const freshParticipants: Participant[] = response.data;
+
+            const encryptedKeys: Record<string, string> = {};
+
+            for (const participant of freshParticipants) {
+                let recipientPublicKey = participant.publicKey;
+
+
+                const isMe = currentUserId && String(participant.id) === String(currentUserId);
+                if (isMe && myPrivateKey) {
+                    const myPrivateKeyBytes = hexToBytes(myPrivateKey);
+                    const myPublicKeyBytes = x25519.getPublicKey(myPrivateKeyBytes);
+                    recipientPublicKey = bytesToHex(myPublicKeyBytes);
+                }
+
+                if (!recipientPublicKey) {
+                    console.warn(`User ${participant.username || participant.id} has no public key!`);
+                    continue;
+                }
+
+                encryptedKeys[participant.id] = await encryptParticipantKey(messageKeyHex, recipientPublicKey);
+            }
+
             await api.post('/messages/send', {
                 chatId: chatId,
-                text: textToSend,
+                text: encryptedText,
+                iv: iv,
+                encryptedKeys: encryptedKeys,
             });
 
             setChats((prevChats) =>
                 prevChats.map((chat) =>
-                    chat.chatId === chatId
-                        ? { ...chat, lastMessage: textToSend }
-                        : chat
+                    chat.chatId === chatId ? { ...chat, lastMessage: textToSend } : chat
                 )
             );
-
 
         } catch (error) {
             console.log('Error sending message: ', error);
             setInputText(textToSend);
         } finally {
             isSendingRef.current = false;
-
-            setTimeout(() => {
-                inputRef.current?.focus();
-            }, 10);
+            setTimeout(() => inputRef.current?.focus(), 10);
         }
     };
 

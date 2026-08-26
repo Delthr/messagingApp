@@ -1,7 +1,7 @@
 package io.everyonecodes.pbltest.repository;
 
-import io.everyonecodes.pbltest.controller.ChatDto;
-import io.everyonecodes.pbltest.model.Chat;
+import io.everyonecodes.pbltest.dto.ChatDto;
+import io.everyonecodes.pbltest.entities.Chat;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,11 +17,13 @@ public interface ChatRepository extends JpaRepository<Chat, UUID> {
     List<Chat> findAllChatsByUserId(@Param("userId") UUID userId);
 
     @Query("""
-    SELECT DISTINCT new io.everyonecodes.pbltest.controller.ChatDto(
+    SELECT DISTINCT new io.everyonecodes.pbltest.dto.ChatDto(
         c.id, 
         c.name, 
         COALESCE(m.text, ''), 
-        COALESCE(CAST(m.status AS string), 'There are no messages in this chat!')
+        COALESCE(CAST(m.status AS string), 'There are no messages in this chat!'),
+        COALESCE(m.iv, ''),
+        COALESCE(m.encryptedKeys, '')
     )
     FROM Chat c
     JOIN c.participants p
@@ -36,9 +38,22 @@ public interface ChatRepository extends JpaRepository<Chat, UUID> {
 """)
     List<ChatDto> findAllUserChatsWithLastMessage(@Param("userId") UUID userId);
 
-
     @Query("SELECT c FROM Chat c WHERE c.isGroupChat = false AND " +
             "EXISTS (SELECT p1 FROM ChatParticipant p1 WHERE p1.chat = c AND p1.user.id = :userAId) AND " +
             "EXISTS (SELECT p2 FROM ChatParticipant p2 WHERE p2.chat = c AND p2.user.id = :userBId)")
     Optional<Chat> findPrivateChatBetweenUsers(@Param("userAId") UUID userAId, @Param("userBId") UUID userBId);
+    @Query("""
+        SELECT m.id 
+        FROM Message m 
+        WHERE m.id IN (
+            SELECT m2.id 
+            FROM Message m2 
+            WHERE m2.chat.id IN (SELECT cp.chat.id FROM ChatParticipant cp WHERE cp.user.id = :userId)
+            AND m2.createdAt = (
+                SELECT MAX(m3.createdAt) FROM Message m3 WHERE m3.chat.id = m2.chat.id
+            )
+        )
+    """)
+    List<UUID> findLastMessageIdsForUser(@Param("userId") UUID userId);
+
 }
