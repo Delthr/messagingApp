@@ -43,3 +43,10 @@ Dadurch werden unnötige `COUNT(*)`-Abfragen bei jedem Scrollen vermieden, was d
 * **Zustandslose REST-Sicherheit:** Endpunkte werden durch Spring Security-Filterketten mit JWT-Bearer-Token geschützt.
 
 * **Sichere WebSockets:** Verbindungsaufbau und STOMP-Subscriptions validieren JWT-Token direkt aus den Autorisierungsheadern, bevor eine aktive Sitzung hergestellt wird.
+
+## Screenshots from the application
+![loginScreen](readmeassets/loginForm.png)
+![registerScreen](readmeassets/registerForm.png)
+![registerScreenWithNonValidValues](readmeassets/invalidEntriesInRegisterForm.png)
+![mainPageWithContactsAndChats](readmeassets/mainPage.png)
+![chatPageWithChatList](readmeassets/chat.png)
