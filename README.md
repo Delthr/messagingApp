@@ -1,7 +1,7 @@
 # Real-Time Event-Driven Chat App
 
 A full-stack messaging application built with **Java 21**, **Spring Boot**, **Apache Kafka**, and **React Native (Expo)**.
-
+![chatPageWithChatList](readmeAssets/chat.png)
 ---
 
 ## Tech Stack
@@ -62,4 +62,4 @@ The server stores only encrypted payloads and has zero knowledge of private keys
 ![registerScreen](readmeAssets/registerForm.png)
 ![registerScreenWithNonValidValues](readmeAssets/invalidEntriesInRegisterForm.png)
 ![mainPageWithContactsAndChats](readmeAssets/mainPage.png)
-![chatPageWithChatList](readmeAssets/chat.png)
+
